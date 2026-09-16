@@ -29,6 +29,10 @@ VENDOR_SUPPORT: dict[str, tuple[str, str]] = {
     "17e9": ("DisplayLink", "https://www.synaptics.com/products/displaylink-graphics/downloads"),
     "06c4": ("Bizlink / Dell dock", "https://www.dell.com/support/home"),
     "0bda": ("Realtek", "https://www.realtek.com/en/downloads"),
+    "15b3": ("NVIDIA Networking / Mellanox", "https://network.nvidia.com/products/infiniband-drivers/linux/mlnx_ofed/"),
+    "1a03": ("ASPEED", "https://www.aspeedtech.com/"),
+    "1077": ("Marvell QLogic", "https://www.marvell.com/support.html"),
+    "1000": ("Broadcom MegaRAID", "https://www.broadcom.com/support/download-search"),
 }
 
 OEM_BY_NAME: list[tuple[str, str, str]] = [

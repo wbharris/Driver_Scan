@@ -1,0 +1,171 @@
+{
+  "hostname": "WIN-S2025SIM",
+  "os": "Microsoft Windows Server 2025 Datacenter",
+  "kernel": "10.0.26100.33451",
+  "manufacturer": "Dell Inc.",
+  "model": "PowerEdge R760",
+  "serial": "SIMS2025R760",
+  "devices": [
+    {
+      "name": "ASPEED Graphics Family",
+      "manufacturer": "ASPEED",
+      "status": "OK",
+      "class": "Display",
+      "instanceId": "PCI\\VEN_1A03&DEV_2600&SUBSYS_07A8",
+      "configManagerErrorCode": 0
+    },
+    {
+      "name": "Microsoft Basic Display Adapter",
+      "manufacturer": "Microsoft",
+      "status": "OK",
+      "class": "Display",
+      "instanceId": "PCI\\VEN_10DE&DEV_2236&SUBSYS_165A10DE",
+      "configManagerErrorCode": 0
+    },
+    {
+      "name": "Broadcom NetXtreme E-Series BCM57414 10Gb",
+      "manufacturer": "Broadcom",
+      "status": "OK",
+      "class": "Net",
+      "instanceId": "PCI\\VEN_14E4&DEV_16D7&SUBSYS_0C0D1028",
+      "configManagerErrorCode": 0
+    },
+    {
+      "name": "NVIDIA Mellanox ConnectX-6 Dx",
+      "manufacturer": "Mellanox Technologies",
+      "status": "Error",
+      "class": "Net",
+      "instanceId": "PCI\\VEN_15B3&DEV_101D&SUBSYS_000315B3",
+      "configManagerErrorCode": 28,
+      "problem": "CM_PROB_FAILED_INSTALL"
+    },
+    {
+      "name": "PERC H755 Adapter",
+      "manufacturer": "Dell",
+      "status": "OK",
+      "class": "SCSIAdapter",
+      "instanceId": "PCI\\VEN_1000&DEV_10E2&SUBSYS_1FE21028",
+      "configManagerErrorCode": 0
+    },
+    {
+      "name": "QLogic FastLinQ QL41232 25GbE",
+      "manufacturer": "QLogic",
+      "status": "Error",
+      "class": "Net",
+      "instanceId": "PCI\\VEN_1077&DEV_8070&SUBSYS_00071077",
+      "configManagerErrorCode": 43,
+      "problem": "CM_PROB_FAILED_POST_START"
+    },
+    {
+      "name": "Intel(R) Ethernet Network Adapter E810-XXV",
+      "manufacturer": "Intel",
+      "status": "OK",
+      "class": "Net",
+      "instanceId": "PCI\\VEN_8086&DEV_1593&SUBSYS_00008086",
+      "configManagerErrorCode": 0
+    },
+    {
+      "name": "Standard NVM Express Controller",
+      "manufacturer": "Standard NVM Express Controller",
+      "status": "OK",
+      "class": "SCSIAdapter",
+      "instanceId": "PCI\\VEN_144D&DEV_A80A&SUBSYS_A801144D",
+      "configManagerErrorCode": 0
+    },
+    {
+      "name": "Dell 12Gbps SAS HBA",
+      "manufacturer": "Dell",
+      "status": "Error",
+      "class": "SCSIAdapter",
+      "instanceId": "PCI\\VEN_1000&DEV_00E6&SUBSYS_1F441028",
+      "configManagerErrorCode": 48,
+      "problem": "CM_PROB_DRIVER_FAILED_LOAD"
+    },
+    {
+      "name": "Remote NDIS based Internet Sharing Device",
+      "manufacturer": "Dell",
+      "status": "Error",
+      "class": "Net",
+      "instanceId": "USB\\VID_413C&PID_A001\\IDRAC",
+      "configManagerErrorCode": 22,
+      "problem": "CM_PROB_DISABLED"
+    },
+    {
+      "name": "Microsoft Hyper-V Network Adapter",
+      "manufacturer": "Microsoft",
+      "status": "OK",
+      "class": "Net",
+      "instanceId": "VMBUS\\{F8615163-DF3E-46C5-913F-F2D2F965ED0E}\\0",
+      "configManagerErrorCode": 0
+    },
+    {
+      "name": "Generic USB Hub",
+      "manufacturer": "Microsoft",
+      "status": "OK",
+      "class": "USB",
+      "instanceId": "USB\\VID_1D6B&PID_0003\\HUB",
+      "configManagerErrorCode": 0
+    }
+  ],
+  "signedDrivers": [
+    {
+      "deviceId": "PCI\\VEN_1A03&DEV_2600&SUBSYS_07A8",
+      "deviceName": "ASPEED Graphics Family",
+      "driverVersion": "1.03.04.0000",
+      "driverDate": "2024-02-01T00:00:00",
+      "infName": "aspeed.inf",
+      "manufacturer": "ASPEED"
+    },
+    {
+      "deviceId": "PCI\\VEN_14E4&DEV_16D7&SUBSYS_0C0D1028",
+      "deviceName": "Broadcom NetXtreme E-Series BCM57414 10Gb",
+      "driverVersion": "227.1.118.0",
+      "driverDate": "2018-11-02T00:00:00",
+      "infName": "bxnd.inf",
+      "manufacturer": "Broadcom"
+    },
+    {
+      "deviceId": "PCI\\VEN_1000&DEV_10E2&SUBSYS_1FE21028",
+      "deviceName": "PERC H755 Adapter",
+      "driverVersion": "7.725.02.00",
+      "driverDate": "2025-01-15T00:00:00",
+      "infName": "lsi_sas3i.inf",
+      "manufacturer": "Dell"
+    },
+    {
+      "deviceId": "PCI\\VEN_8086&DEV_1593&SUBSYS_00008086",
+      "deviceName": "Intel(R) Ethernet Network Adapter E810-XXV",
+      "driverVersion": "1.17.81.0",
+      "driverDate": "2025-06-10T00:00:00",
+      "infName": "icee.inf",
+      "manufacturer": "Intel"
+    },
+    {
+      "deviceId": "PCI\\VEN_144D&DEV_A80A&SUBSYS_A801144D",
+      "deviceName": "Standard NVM Express Controller",
+      "driverVersion": "10.0.26100.33451",
+      "driverDate": "2026-09-14T00:00:00",
+      "infName": "stornvme.inf",
+      "manufacturer": "Microsoft"
+    },
+    {
+      "deviceId": "VMBUS\\{F8615163-DF3E-46C5-913F-F2D2F965ED0E}\\0",
+      "deviceName": "Microsoft Hyper-V Network Adapter",
+      "driverVersion": "10.0.26100.1",
+      "driverDate": "2024-11-01T00:00:00",
+      "infName": "netvsc.inf",
+      "manufacturer": "Microsoft"
+    }
+  ],
+  "windowsUpdateDrivers": [
+    {
+      "title": "Intel Corporation - Net - 1.19.4.0",
+      "description": "Intel Ethernet E810 driver offered by Windows Update."
+    },
+    {
+      "title": "Broadcom - Net - 230.0.0.0",
+      "description": "Broadcom NetXtreme E-Series driver offered by Windows Update."
+    }
+  ],
+  "windowsUpdateError": null
+}

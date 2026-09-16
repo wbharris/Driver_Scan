@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.2
+
+- Windows Server 2025 Datacenter simulation (`tests/data/windowsserver2025-poweredge.json`, build 26100.33451).
+
 ## 0.4.1
 
 - `--fixture FILE` replays a Windows collector JSON (Windows 11 simulation on Linux).
