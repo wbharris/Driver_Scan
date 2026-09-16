@@ -81,6 +81,13 @@ def test_schedule_runner(tmp_path, monkeypatch):
     assert "backup" in text
     assert str(tmp_path) in text
     assert "problems=[1-9][0-9]*" in text
+    assert "set +e" in text
+    assert 'status=$?' in text
+    scan_at = text.index("driver-scan") if "driver-scan" in text else text.index("scan")
+    backup_at = text.index("backup")
+    plus_e = text.index("set +e")
+    assert plus_e < scan_at or plus_e < backup_at
+    assert backup_at > text.index("status=$?")
 
 
 def test_restore_dry_run(tmp_path):

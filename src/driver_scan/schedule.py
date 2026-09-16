@@ -24,13 +24,31 @@ def write_runner_script(*, do_backup: bool, notify: bool) -> Path:
     backup_line = _shell_join(cmd + ["backup", "-o", str(backup_zip)])
     if detect_family() == "windows":
         path = root / "run.cmd"
-        lines = ["@echo off", scan_line]
+        lines = [
+            "@echo off",
+            "setlocal",
+            "set STATUS=0",
+            scan_line,
+            "set STATUS=%ERRORLEVEL%",
+            "if %STATUS% GTR 1 exit /b %STATUS%",
+        ]
         if do_backup:
             lines.append(backup_line)
+        lines.append("exit /b %STATUS%")
         path.write_text("\r\n".join(lines) + "\r\n", encoding="utf-8")
         return path
     path = root / "run.sh"
-    lines = ["#!/bin/sh", "set -e", scan_line]
+    # Scan exits 1 when problems exist; that must not skip backup/notify.
+    lines = [
+        "#!/bin/sh",
+        "set -e",
+        "status=0",
+        "set +e",
+        scan_line,
+        "status=$?",
+        "set -e",
+        'if [ "$status" -gt 1 ]; then exit "$status"; fi',
+    ]
     if do_backup:
         lines.append(backup_line)
     if notify and which("notify-send"):
@@ -38,6 +56,7 @@ def write_runner_script(*, do_backup: bool, notify: bool) -> Path:
             f'if grep -Eq "problems=[1-9][0-9]*" "{report}" 2>/dev/null; then '
             f'notify-send "Driver Scan" "Problems written to {report}"; fi'
         )
+    lines.append('exit "$status"')
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     path.chmod(0o755)
     return path

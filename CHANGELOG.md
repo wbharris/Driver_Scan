@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.7
+
+- Scheduled Linux runner captures scan status 1 so backup/notify still run; Windows runner preserves the same status.
+- Failed Win32_PnPEntity collection is an incomplete/error scan, not a clean exit 0.
+- ZIP restore copies in chunks with per-member and total size caps.
+
 ## 0.4.6
 
 - Windows collector records CIM/WU errors instead of swallowing them; skips unplugged devices; Python keeps JSON if PowerShell exits non-zero.

@@ -196,8 +196,11 @@ def _restore_linux(
         if not _is_under(target, dest_root_res):
             notes.append(f"skipped zip slip {name!r}")
             continue
-        target.write_bytes(zf.read(name))
-        notes.append(f"wrote {target}")
+        copied, err = copy_zip_member(zf, name, target)
+        if err:
+            notes.append(err)
+            continue
+        notes.append(f"wrote {target} ({copied} bytes)")
     return notes
 
 
@@ -254,10 +257,16 @@ def _windows_extract_members(all_names: list[str], infs: list[str]) -> list[str]
     return out
 
 
+MAX_ZIP_MEMBER_BYTES = 64 * 1024 * 1024
+MAX_ZIP_TOTAL_BYTES = 512 * 1024 * 1024
+ZIP_COPY_CHUNK = 1024 * 1024
+
+
 def extract_zip_members(zf: zipfile.ZipFile, names: list[str], dest: Path) -> list[str]:
     notes: list[str] = []
     dest = dest.resolve()
     dest.mkdir(parents=True, exist_ok=True)
+    total = 0
     for name in names:
         rel = zip_member_relpath(name)
         if rel is None:
@@ -267,8 +276,53 @@ def extract_zip_members(zf: zipfile.ZipFile, names: list[str], dest: Path) -> li
         if not _is_under(target, dest):
             notes.append(f"skipped zip slip {name!r}")
             continue
+        try:
+            info = zf.getinfo(name)
+            declared = int(info.file_size)
+        except (KeyError, ValueError, OSError):
+            declared = 0
+        if declared > MAX_ZIP_MEMBER_BYTES:
+            notes.append(f"skipped oversized zip member {name!r} ({declared} bytes)")
+            continue
+        if total + declared > MAX_ZIP_TOTAL_BYTES:
+            notes.append(f"skipped zip member {name!r}; total extract cap reached")
+            continue
         target.parent.mkdir(parents=True, exist_ok=True)
-        with zf.open(name) as src:
-            target.write_bytes(src.read())
+        copied, err = copy_zip_member(
+            zf, name, target, already=total, member_cap=MAX_ZIP_MEMBER_BYTES, total_cap=MAX_ZIP_TOTAL_BYTES
+        )
+        if err:
+            notes.append(err)
+            continue
+        total += copied
         notes.append(f"extracted {rel.as_posix()}")
     return notes
+
+
+def copy_zip_member(
+    zf: zipfile.ZipFile,
+    name: str,
+    target: Path,
+    *,
+    already: int = 0,
+    member_cap: int = MAX_ZIP_MEMBER_BYTES,
+    total_cap: int = MAX_ZIP_TOTAL_BYTES,
+) -> tuple[int, str | None]:
+    copied = 0
+    try:
+        with zf.open(name) as src, target.open("wb") as dst:
+            while True:
+                chunk = src.read(ZIP_COPY_CHUNK)
+                if not chunk:
+                    break
+                copied += len(chunk)
+                if copied > member_cap:
+                    raise OSError("member exceeds per-file extract cap")
+                if already + copied > total_cap:
+                    raise OSError("archive exceeds total extract cap")
+                dst.write(chunk)
+    except OSError as exc:
+        if target.exists():
+            target.unlink(missing_ok=True)
+        return 0, f"skipped zip member {name!r}: {exc}"
+    return copied, None

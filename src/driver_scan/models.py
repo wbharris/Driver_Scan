@@ -56,6 +56,7 @@ class Report:
     tools_used: list[str] = field(default_factory=list)
     tools_skipped: list[str] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
+    incomplete: bool = False
 
     def problems(self) -> list[Finding]:
         return [f for f in self.findings if f.severity in PROBLEM_SEVERITIES]
@@ -70,6 +71,7 @@ class Report:
         d = asdict(self)
         d["counts"] = self.counts()
         d["problem_count"] = len(self.problems())
+        d["incomplete"] = self.incomplete
         return d
 
 

@@ -18,6 +18,24 @@ CM_SKIP = frozenset({22, 45})  # disabled / not connected
 COLLECTOR = Path(__file__).with_name("windows_collect.ps1")
 
 
+def mark_incomplete(report: Report, reason: str) -> None:
+    if report.incomplete:
+        return
+    report.incomplete = True
+    if "windows-pnp" not in report.tools_skipped:
+        report.tools_skipped.append("windows-pnp")
+    report.findings.append(
+        Finding(
+            id="collect:incomplete",
+            severity="error",
+            bus="system",
+            name="Incomplete inventory",
+            detail=reason,
+            suggested=["Re-run the scan; do not treat an empty report as a clean machine."],
+        )
+    )
+
+
 def scan_windows(*, include_windows_update: bool = True) -> Report:
     if detect_family() != "windows":
         report = Report(
@@ -38,6 +56,7 @@ def scan_windows(*, include_windows_update: bool = True) -> Report:
     report.tools_skipped.extend(skipped)
     if payload is None:
         report.notes.append("windows collect returned no payload")
+        mark_incomplete(report, "Windows collector returned no payload.")
     return report
 
 
@@ -61,8 +80,12 @@ def report_from_windows_payload(
         findings = [f for f in findings if not str(f.id).startswith("wu:")]
     report.findings.extend(findings)
     report.tools_used.append("windows-payload")
-    for item in payload.get("collectErrors") or []:
-        report.notes.append(f"collector: {str(item)[:300]}")
+    errors = [str(item) for item in (payload.get("collectErrors") or [])]
+    for item in errors:
+        report.notes.append(f"collector: {item[:300]}")
+    pnp_failed = any("Win32_PnPEntity" in item for item in errors)
+    if pnp_failed or (not payload.get("devices") and errors):
+        mark_incomplete(report, "; ".join(errors)[:500] or "PnP inventory was not collected.")
     if payload.get("windowsUpdateError"):
         report.notes.append(str(payload["windowsUpdateError"])[:300])
         report.tools_skipped.append("windows-update-search")

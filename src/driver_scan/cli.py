@@ -178,7 +178,9 @@ def _cmd_scan(args: argparse.Namespace) -> int:
     sys.stdout.write(body)
     if args.notify and report.problems():
         desktop_notify("Driver Scan", f"{len(report.problems())} problem(s) on {report.hostname}")
-    return 1 if report.problems() else 0
+    if report.incomplete or report.problems():
+        return 1
+    return 0
 
 
 def _cmd_backup(args: argparse.Namespace) -> int:
