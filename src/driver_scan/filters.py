@@ -28,20 +28,22 @@ def apply_view_filters(
     categories: list[str] | None = None,
     older_than_days: int | None = None,
 ) -> None:
-    if not categories and not older_than_days:
+    if not categories and older_than_days is None:
         return
+    if older_than_days is not None and older_than_days < 0:
+        raise ValueError("older_than_days must be >= 0")
     wanted = {c.lower() for c in (categories or [])}
     kept: list[Finding] = []
     for f in report.findings:
         if wanted and f.category.lower() not in wanted:
             continue
-        if older_than_days and not is_older_than(f, older_than_days):
+        if older_than_days is not None and not is_older_than(f, older_than_days):
             continue
         kept.append(f)
     report.findings = kept
     bits = []
     if wanted:
         bits.append("categories " + ",".join(sorted(wanted)))
-    if older_than_days:
+    if older_than_days is not None:
         bits.append(f"driver date older than {older_than_days}d")
     report.notes.append("view filter: " + "; ".join(bits))

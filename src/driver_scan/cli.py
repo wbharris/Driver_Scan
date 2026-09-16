@@ -109,6 +109,16 @@ def _add_scan_flags(p: argparse.ArgumentParser) -> None:
     _add_view_flags(p)
 
 
+def _nonneg_int(value: str) -> int:
+    try:
+        n = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("must be an integer") from exc
+    if n < 0:
+        raise argparse.ArgumentTypeError("must be >= 0")
+    return n
+
+
 def _add_view_flags(p: argparse.ArgumentParser) -> None:
     p.add_argument(
         "--os",
@@ -119,9 +129,9 @@ def _add_view_flags(p: argparse.ArgumentParser) -> None:
     p.add_argument("--category", action="append", dest="categories", help="Repeatable: graphics, audio, network, printer, imaging, …")
     p.add_argument(
         "--older-than",
-        type=int,
+        type=_nonneg_int,
         metavar="DAYS",
-        help="Keep rows whose driver date is at least this many days old (does not invent updates)",
+        help="Keep rows whose driver date is at least this many days old (0 = dated today or earlier)",
     )
     p.add_argument("--include-ignored", action="store_true", help="Do not apply the ignore list")
     p.add_argument(

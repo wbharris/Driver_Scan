@@ -142,10 +142,15 @@ def _restore_windows(zf: zipfile.ZipFile, infs: list[str], *, apply: bool) -> li
         notes.append("pnputil not found")
         return notes
     extract_root = Path(tempfile.mkdtemp(prefix="driver-scan-restore-"))
-    zf.extractall(extract_root)
+    wanted = _windows_extract_members(zf.namelist(), infs)
+    notes.extend(extract_zip_members(zf, wanted, extract_root))
     for inf in infs:
+        rel = zip_member_relpath(inf)
+        if rel is None:
+            notes.append(f"skipped unsafe INF path {inf!r}")
+            continue
         code, out, err = run(
-            [pnputil, "/add-driver", str(extract_root / inf), "/install"],
+            [pnputil, "/add-driver", str(extract_root / rel), "/install"],
             timeout=180,
         )
         notes.append(f"{inf}: {(out or err).strip() or f'exit {code}'}")
@@ -177,11 +182,93 @@ def _restore_linux(
         notes.extend(confs[:20])
         return notes
     for name in confs:
-        for prefix, dest_dir in mapping.items():
-            if not name.startswith(prefix):
-                continue
-            dest_dir.mkdir(parents=True, exist_ok=True)
-            target = dest_dir / Path(name).name
-            target.write_bytes(zf.read(name))
-            notes.append(f"wrote {target}")
+        rel = zip_member_relpath(name)
+        if rel is None or len(rel.parts) != 2:
+            notes.append(f"skipped unsafe zip member {name!r}")
+            continue
+        prefix = rel.parts[0] + "/"
+        dest_dir = mapping.get(prefix)
+        if dest_dir is None:
+            continue
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        target = (dest_dir / rel.name).resolve()
+        dest_root_res = dest_dir.resolve()
+        if not _is_under(target, dest_root_res):
+            notes.append(f"skipped zip slip {name!r}")
+            continue
+        target.write_bytes(zf.read(name))
+        notes.append(f"wrote {target}")
+    return notes
+
+
+def zip_member_relpath(name: str) -> Path | None:
+    """Return a relative path for a zip member, or None if it is unsafe."""
+    raw = name.replace("\\", "/").strip()
+    if not raw or raw.endswith("/"):
+        return None
+    if raw.startswith("/") or raw.startswith("../") or raw == "..":
+        return None
+    if len(raw) >= 2 and raw[1] == ":":
+        return None
+    parts: list[str] = []
+    for part in raw.split("/"):
+        if part in ("", "."):
+            continue
+        if part == ".." or part.startswith(".."):
+            return None
+        parts.append(part)
+    if not parts:
+        return None
+    return Path(*parts)
+
+
+def _is_under(path: Path, root: Path) -> bool:
+    try:
+        path.relative_to(root)
+        return True
+    except ValueError:
+        return False
+
+
+def _windows_extract_members(all_names: list[str], infs: list[str]) -> list[str]:
+    """Selected INFs plus other files in the same zip directory (sys/cat next to inf)."""
+    parents: set[str] = set()
+    selected: set[str] = set()
+    for inf in infs:
+        rel = zip_member_relpath(inf)
+        if rel is None:
+            continue
+        selected.add(inf.replace("\\", "/"))
+        parent = rel.parent.as_posix()
+        if parent != ".":
+            parents.add(parent)
+    out: list[str] = []
+    for name in all_names:
+        rel = zip_member_relpath(name)
+        if rel is None:
+            continue
+        n = name.replace("\\", "/")
+        parent = rel.parent.as_posix()
+        if n in selected or parent in parents:
+            out.append(name)
+    return out
+
+
+def extract_zip_members(zf: zipfile.ZipFile, names: list[str], dest: Path) -> list[str]:
+    notes: list[str] = []
+    dest = dest.resolve()
+    dest.mkdir(parents=True, exist_ok=True)
+    for name in names:
+        rel = zip_member_relpath(name)
+        if rel is None:
+            notes.append(f"skipped unsafe zip member {name!r}")
+            continue
+        target = (dest / rel).resolve()
+        if not _is_under(target, dest):
+            notes.append(f"skipped zip slip {name!r}")
+            continue
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with zf.open(name) as src:
+            target.write_bytes(src.read())
+        notes.append(f"extracted {rel.as_posix()}")
     return notes

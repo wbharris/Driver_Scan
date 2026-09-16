@@ -20,6 +20,21 @@ def test_help_and_version(capsys):
     assert "ignore" in out.lower()
 
 
+def test_older_than_negative_cli(capsys):
+    try:
+        main(["scan", "--older-than", "-1", "--help"])
+    except SystemExit:
+        pass
+    try:
+        code = main(["list", "--older-than", "-1"])
+    except SystemExit as e:
+        assert e.code == 2
+    else:
+        assert code == 2
+    err = capsys.readouterr().err
+    assert ">= 0" in err or "invalid" in err.lower()
+
+
 def test_renderers():
     report = Report(
         hostname="box",

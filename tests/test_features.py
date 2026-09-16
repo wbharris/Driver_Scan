@@ -1,9 +1,10 @@
 import zipfile
+from pathlib import Path
 
-from driver_scan.backup import backup, restore
+from driver_scan.backup import backup, extract_zip_members, restore, zip_member_relpath
 from driver_scan.filters import apply_view_filters
 from driver_scan.guide import guide_text
-from driver_scan.ignore import add_ignore, apply_ignore, load_ignored
+from driver_scan.ignore import add_ignore, apply_ignore, is_ignored, load_ignored
 from driver_scan.fetch import locate_text
 from driver_scan.linux import parse_apt_package_names
 from driver_scan.models import Finding, Report
@@ -160,3 +161,81 @@ def test_older_than_and_category_filters():
     )
     apply_view_filters(report, categories=["graphics"], older_than_days=365)
     assert [f.id for f in report.findings] == ["a"]
+
+
+def test_older_than_zero_keeps_dated_drivers():
+    report = Report(
+        hostname="box",
+        os="Kali",
+        kernel="7",
+        scanned_at="2026-01-01T00:00:00Z",
+        findings=[
+            Finding(
+                id="dated",
+                severity="ok",
+                bus="pnp",
+                name="nic",
+                detail="x",
+                driver_date="2019-08-15",
+            ),
+            Finding(id="undated", severity="ok", bus="pnp", name="hub", detail="x"),
+        ],
+    )
+    apply_view_filters(report, older_than_days=0)
+    assert [f.id for f in report.findings] == ["dated"]
+
+
+def test_older_than_negative_rejected():
+    report = Report(
+        hostname="box",
+        os="Kali",
+        kernel="7",
+        scanned_at="2026-01-01T00:00:00Z",
+        findings=[],
+    )
+    try:
+        apply_view_filters(report, older_than_days=-1)
+    except ValueError as exc:
+        assert ">= 0" in str(exc)
+    else:
+        raise AssertionError("expected ValueError")
+
+
+def test_ignore_is_exact_not_substring():
+    wifi = Finding(id="pci:02:00.0", severity="missing", bus="pci", name="Wi-Fi", detail="x")
+    other = Finding(id="pci:00:02.0", severity="ok", bus="pci", name="GPU", detail="x")
+    assert is_ignored(wifi, ["pci:02:00.0"])
+    assert not is_ignored(other, ["pci:0"])
+    assert not is_ignored(wifi, ["pci:0"])
+    vid = Finding(
+        id="pnp:x",
+        severity="missing",
+        bus="pnp",
+        name="cam",
+        detail="x",
+        vendor_id="1bcf",
+        device_id="2b96",
+    )
+    assert is_ignored(vid, ["1BCF:2B96"])
+
+
+def test_zip_slip_members_rejected(tmp_path):
+    assert zip_member_relpath("../etc/passwd") is None
+    assert zip_member_relpath("drivers/../evil.inf") is None
+    assert zip_member_relpath("/tmp/x.inf") is None
+    assert zip_member_relpath("drivers/net/foo.inf") == Path("drivers/net/foo.inf")
+    archive = tmp_path / "evil.zip"
+    with zipfile.ZipFile(archive, "w") as zf:
+        zf.writestr("../outside.inf", b"nope")
+        zf.writestr("drivers/ok.inf", b"ok")
+        zf.writestr("modprobe.d/../../tmp/evil.conf", b"nope")
+    dest = tmp_path / "out"
+    with zipfile.ZipFile(archive) as zf:
+        notes = extract_zip_members(zf, zf.namelist(), dest)
+    blob = "\n".join(notes)
+    assert "unsafe" in blob
+    assert (dest / "drivers" / "ok.inf").read_bytes() == b"ok"
+    assert not (tmp_path / "outside.inf").exists()
+    linux_notes = restore(archive, apply=True, family="linux", dest_root=tmp_path / "etc")
+    assert any("unsafe" in n for n in linux_notes)
+    assert not list((tmp_path / "etc").rglob("evil.conf")) if (tmp_path / "etc").exists() else True

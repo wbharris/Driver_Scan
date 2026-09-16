@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.5
+
+- Restore extracts only validated zip members (no `extractall`, reject `..` paths).
+- `--older-than 0` is a real filter; negative values are rejected.
+- Ignore list matches finding id, name, or vendor:device exactly (case-insensitive).
+
 ## 0.4.4
 
 - dnf/yum upgradable parse for RHEL-style package lists.

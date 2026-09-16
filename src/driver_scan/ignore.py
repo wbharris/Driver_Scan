@@ -45,13 +45,18 @@ def remove_ignore(item: str, path: Path | None = None) -> list[str]:
     return ids
 
 
+def _norm(value: str) -> str:
+    return value.strip().lower()
+
+
 def is_ignored(finding: Finding, ids: list[str]) -> bool:
     if not ids:
         return False
-    keys = {finding.id, finding.name}
+    keys = {_norm(finding.id), _norm(finding.name)}
     if finding.vendor_id and finding.device_id:
-        keys.add(f"{finding.vendor_id}:{finding.device_id}")
-    return any(i in keys or i.lower() in finding.id.lower() for i in ids)
+        keys.add(_norm(f"{finding.vendor_id}:{finding.device_id}"))
+    tokens = {_norm(i) for i in ids if i.strip()}
+    return bool(keys & tokens)
 
 
 def apply_ignore(report: Report, ids: list[str]) -> int:
