@@ -29,6 +29,15 @@ PAYLOAD = {
             "configManagerErrorCode": 0,
         },
         {
+            "name": "Old USB stick",
+            "manufacturer": "Contoso",
+            "status": "Unknown",
+            "class": "USB",
+            "instanceId": r"USB\VID_1234&PID_5678\GONE",
+            "configManagerErrorCode": 28,
+            "present": False,
+        },
+        {
             "name": "Disabled NIC",
             "manufacturer": "Intel",
             "status": "Error",
@@ -63,6 +72,7 @@ def test_windows_payload_severities():
     assert gfx.driver == "iigd_dch.inf"
     assert gfx.official_url
     assert by_name["Disabled NIC"].severity == "skip"
+    assert by_name["Old USB stick"].severity == "skip"
     assert by_name["Microsoft Basic Display Adapter"].severity == "mismatch"
     assert by_name["Microsoft Basic Display Adapter"].category == "graphics"
     wu = [f for f in findings if f.severity == "update"]

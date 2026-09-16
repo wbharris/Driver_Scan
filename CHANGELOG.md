@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.6
+
+- Windows collector records CIM/WU errors instead of swallowing them; skips unplugged devices; Python keeps JSON if PowerShell exits non-zero.
+- `fetch` uses `dnf download` when apt is absent; live Linux scan uses `dnf check-update`.
+- Schedule notify matches problem counts of 10+.
+- PRODUCT.md categories and fetch/dnf docs match the code.
+
 ## 0.4.5
 
 - Restore extracts only validated zip members (no `extractall`, reject `..` paths).

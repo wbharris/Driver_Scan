@@ -35,7 +35,7 @@ def write_runner_script(*, do_backup: bool, notify: bool) -> Path:
         lines.append(backup_line)
     if notify and which("notify-send"):
         lines.append(
-            f'if grep -q "problems=[1-9]" "{report}" 2>/dev/null; then '
+            f'if grep -Eq "problems=[1-9][0-9]*" "{report}" 2>/dev/null; then '
             f'notify-send "Driver Scan" "Problems written to {report}"; fi'
         )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")

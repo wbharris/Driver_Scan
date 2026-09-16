@@ -61,6 +61,8 @@ def report_from_windows_payload(
         findings = [f for f in findings if not str(f.id).startswith("wu:")]
     report.findings.extend(findings)
     report.tools_used.append("windows-payload")
+    for item in payload.get("collectErrors") or []:
+        report.notes.append(f"collector: {str(item)[:300]}")
     if payload.get("windowsUpdateError"):
         report.notes.append(str(payload["windowsUpdateError"])[:300])
         report.tools_skipped.append("windows-update-search")
@@ -96,16 +98,25 @@ def collect_windows(*, include_windows_update: bool = True) -> tuple[dict[str, A
     if include_windows_update:
         argv.append("-IncludeWindowsUpdate")
     code, out, err = run(argv, timeout=180)
-    if code != 0 or not out.strip():
+    raw = out.strip()
+    if raw and not raw.startswith("{"):
+        brace = raw.find("{")
+        if brace >= 0:
+            raw = raw[brace:]
+    if not raw:
         skipped.append(f"powershell collect (exit {code})")
         if err.strip():
             skipped.append(err.strip().splitlines()[0][:200])
         return None, skipped
     try:
-        data = json.loads(out)
+        data = json.loads(raw)
     except json.JSONDecodeError:
         skipped.append("powershell JSON parse")
+        if code != 0:
+            skipped.append(f"powershell collect (exit {code})")
         return None, skipped
+    if code != 0:
+        skipped.append(f"powershell collect (exit {code}, JSON kept)")
     if not isinstance(data, dict):
         skipped.append("powershell JSON shape")
         return None, skipped
@@ -177,8 +188,13 @@ def _device_finding(dev: dict[str, Any], signed: dict[str, dict[str, Any]]) -> F
         version = str(ver) if ver else None
         driver_date = str(date)[:10] if date else None
 
+    present = dev.get("present")
     why = windows_mismatch(name=name, class_name=class_name, code=code, category=cat)
-    if code in CM_MISSING or (status.lower() == "error" and code == 28):
+    if present in (False, 0, "False", "false"):
+        severity = "skip"
+        detail = "Device not present (unplugged / not enumerated)."
+        suggested = []
+    elif code in CM_MISSING or (status.lower() == "error" and code == 28):
         severity = "missing"
         detail = f"Device Manager code {code} (no driver). {problem} {status}".strip()
         suggested = [

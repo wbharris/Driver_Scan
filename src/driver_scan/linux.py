@@ -111,8 +111,13 @@ def scan_linux() -> Report:
         )
         if apt is not None:
             report.findings.extend(parse_apt_upgradable(apt))
+    elif which("dnf"):
+        dnf = _tool(report, "dnf", ["dnf", "-q", "check-update"], timeout=60)
+        if dnf is not None:
+            report.findings.extend(parse_dnf_upgradable(dnf))
     else:
         report.tools_skipped.append("apt")
+        report.tools_skipped.append("dnf")
 
     annotate_modinfo(report.findings)
     apply_chassis(report, *read_dmi())

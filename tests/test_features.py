@@ -68,11 +68,19 @@ def test_backup_zip(tmp_path):
 
 def test_schedule_runner(tmp_path, monkeypatch):
     monkeypatch.setattr("driver_scan.schedule.data_dir", lambda: tmp_path)
-    script = write_runner_script(do_backup=True, notify=False)
+
+    def fake_which(name: str) -> str | None:
+        if name in {"notify-send", "driver-scan"}:
+            return f"/usr/bin/{name}"
+        return None
+
+    monkeypatch.setattr("driver_scan.schedule.which", fake_which)
+    script = write_runner_script(do_backup=True, notify=True)
     text = script.read_text(encoding="utf-8")
     assert "scan" in text
     assert "backup" in text
     assert str(tmp_path) in text
+    assert "problems=[1-9][0-9]*" in text
 
 
 def test_restore_dry_run(tmp_path):

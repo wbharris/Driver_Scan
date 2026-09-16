@@ -40,7 +40,7 @@ def fetch(dest: Path, *, family: str | None = None, include_windows_update: bool
     notes.append(f"wrote {dest / 'LINKS.txt'}")
     fam = (family or detect_family()).lower()
     if fam == "linux":
-        notes.extend(_fetch_apt(dest, report))
+        notes.extend(_fetch_linux(dest, report))
     else:
         notes.append(
             "Windows: use Windows Update optional driver updates; "
@@ -49,23 +49,41 @@ def fetch(dest: Path, *, family: str | None = None, include_windows_update: bool
     return dest, notes
 
 
-def _fetch_apt(dest: Path, report: Report) -> list[str]:
-    notes: list[str] = []
-    apt_get = which("apt-get")
-    if not apt_get:
-        notes.append("apt-get not found")
-        return notes
+def _packages_from_report(report: Report) -> list[str]:
     packages: list[str] = []
     for f in report.findings:
-        if f.id == "apt:driver-firmware":
+        if f.id in {"apt:driver-firmware", "dnf:driver-firmware"}:
             packages = list(f.modules) or parse_apt_package_names(f.detail)
+    return packages
+
+
+def _fetch_linux(dest: Path, report: Report) -> list[str]:
+    notes: list[str] = []
+    packages = _packages_from_report(report)
     if not packages:
         notes.append("no driver/firmware OS packages to download")
         return notes
-    for pkg in packages:
-        code, out, err = run([apt_get, "download", pkg], timeout=180, cwd=dest)
-        if code == 0:
-            notes.append(f"downloaded {pkg}")
-        else:
-            notes.append(f"apt-get download {pkg} exit {code}: {(err or out).strip().splitlines()[:1]}")
+    apt_get = which("apt-get")
+    dnf = which("dnf")
+    if apt_get:
+        for pkg in packages:
+            code, out, err = run([apt_get, "download", pkg], timeout=180, cwd=dest)
+            if code == 0:
+                notes.append(f"downloaded {pkg}")
+            else:
+                notes.append(f"apt-get download {pkg} exit {code}: {(err or out).strip().splitlines()[:1]}")
+        return notes
+    if dnf:
+        for pkg in packages:
+            code, out, err = run(
+                [dnf, "download", f"--destdir={dest}", pkg],
+                timeout=180,
+                cwd=dest,
+            )
+            if code == 0:
+                notes.append(f"downloaded {pkg}")
+            else:
+                notes.append(f"dnf download {pkg} exit {code}: {(err or out).strip().splitlines()[:1]}")
+        return notes
+    notes.append("apt-get/dnf not found")
     return notes

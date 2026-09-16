@@ -26,20 +26,20 @@ this machine
      ▼
 2. Inventory
    Linux:  lspci -nnk, lsusb + sysfs bind, dmesg/journal firmware,
-           dkms, ubuntu-drivers, apt upgradable (firmware/GPU), modinfo version
+           dkms, ubuntu-drivers, apt/dnf upgradable (firmware/GPU), modinfo version
    Windows: Win32_PnPEntity, Win32_PnPSignedDriver (version + date),
             optional Microsoft.Update.Session Type='Driver'
      │
      ▼
 3. Classify  missing | mismatch | error | firmware | update | ok | skip
-   Categories: graphics, audio, network, chipset, storage, usb, other
+   Categories: graphics, audio, network, chipset, storage, printer, imaging, usb, other
      │
      ▼
 4. Report  text | markdown | json | html
    official_url = chip vendor; oem_url = PC maker
      │
      ├─ locate  unique official URLs
-     ├─ fetch   LINKS.txt + apt-get download (Linux OS packages only)
+     ├─ fetch   LINKS.txt + apt-get/dnf download (Linux OS packages only)
      ├─ backup  zip (report + pnputil export or Linux config snapshot)
      └─ schedule  systemd --user timer or schtasks
 ```
@@ -52,7 +52,7 @@ this machine
 | `list` | All installed drivers grouped by class (see everything in one place) |
 | `guide` | Numbered playbook: backup, OS update, PC maker, vendor, restore |
 | `locate` | Print PC-maker URL and per-problem chip-vendor URLs |
-| `fetch` | `LINKS.txt`; Linux also `apt-get download` matching firmware/driver packages |
+| `fetch` | `LINKS.txt`; Linux also `apt-get download` or `dnf download` matching firmware/driver packages |
 | `backup` | Zip report + driver store export (Windows) or lspci/lsusb/modprobe.d/dkms (Linux) |
 | `restore` | Dry-run a backup zip; `--apply` restores Linux configs or Windows INF via pnputil (Windows restore point first). `--only` |
 | `ignore` | Persist device ids that should not count as problems |
@@ -62,7 +62,7 @@ this machine
 
 | OS | Required tools | Optional |
 |----|----------------|----------|
-| Linux | `lspci`, `lsusb`, `/sys` | `dmesg` / `journalctl`, `dkms`, `ubuntu-drivers`, `apt`, `modinfo`, DMI |
+| Linux | `lspci`, `lsusb`, `/sys` | `dmesg` / `journalctl`, `dkms`, `ubuntu-drivers`, `apt`, `dnf`, `modinfo`, DMI |
 | Windows | PowerShell + CIM | Windows Update COM search (`--no-windows-update` skips), `pnputil`, `schtasks` |
 
 Missing tools are **skipped and named**, not a crash.
@@ -93,7 +93,7 @@ Missing tools are **skipped and named**, not a crash.
 
 **Updates**
 
-- Linux: `apt list --upgradable` rows matching firmware / microcode / nvidia / mesa / iwlwifi / similar
+- Linux: `apt list --upgradable` or `dnf check-update` rows matching firmware / microcode / nvidia / mesa / iwlwifi / similar
 - Windows: `IsInstalled=0 and Type='Driver'`
 - No commercial “latest version” comparison
 
