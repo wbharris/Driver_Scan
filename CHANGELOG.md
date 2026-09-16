@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.4
+
+- dnf/yum upgradable parse for RHEL-style package lists.
+- RHEL 10.2 simulation (`tests/simulate_rhel102.py`, kernel 6.12.0-211.7.1.el10_2).
+
 ## 0.4.3
 
 - Linux collector fixtures (`family: linux` + lspci/lsusb/dmesg/apt text).

@@ -1,0 +1,26 @@
+{
+  "family": "linux",
+  "hostname": "rhel-102-sim",
+  "os": "Red Hat Enterprise Linux 10.2",
+  "kernel": "6.12.0-211.7.1.el10_2.x86_64",
+  "manufacturer": "Dell Inc.",
+  "model": "PowerEdge R760",
+  "serial": "SIMRHEL102R760",
+  "lspci": "00:00.0 Host bridge [0600]: Intel Corporation Device [8086:a700]\n\tSubsystem: Dell Device [1028:07a8]\n00:02.0 VGA compatible controller [0300]: ASPEED Technology, Inc. ASPEED Graphics Family [1a03:2600] (rev 52)\n\tSubsystem: Dell Device [1028:07a8]\n\tKernel driver in use: ast\n\tKernel modules: ast\n01:00.0 RAID bus controller [0104]: Broadcom / LSI MegaRAID 12GSAS/PCIe Secure SAS39xx [1000:10e2]\n\tSubsystem: Dell PERC H755 Adapter [1028:1fe2]\n\tKernel driver in use: megaraid_sas\n\tKernel modules: megaraid_sas\n02:00.0 Ethernet controller [0200]: Broadcom Inc. and subsidiaries BCM57414 NetXtreme-E 10Gb/25Gb RDMA Ethernet Controller [14e4:16d7]\n\tSubsystem: Dell Device [1028:0c0d]\n\tKernel driver in use: bnxt_en\n\tKernel modules: bnxt_en\n03:00.0 Ethernet controller [0200]: Mellanox Technologies MT2892 Family [ConnectX-6 Dx] [15b3:101d]\n\tSubsystem: Mellanox Technologies Device [15b3:0003]\n\tKernel modules: mlx5_core\n04:00.0 Ethernet controller [0200]: QLogic Corp. FastLinQ QL41232 25GbE [1077:8070]\n\tSubsystem: QLogic Corp. Device [1077:0007]\n\tKernel driver in use: qede\n\tKernel modules: qede\n05:00.0 VGA compatible controller [0300]: NVIDIA Corporation GA102GL [A40] [10de:2235] (rev a1)\n\tSubsystem: NVIDIA Corporation Device [10de:145a]\n\tKernel driver in use: nouveau\n\tKernel modules: nvidiafb, nvidia, nouveau\n06:00.0 Non-Volatile memory controller [0108]: Samsung Electronics Co Ltd NVMe SSD Controller PM9A1 [144d:a80a]\n\tSubsystem: Samsung Electronics Co Ltd Device [144d:a801]\n\tKernel driver in use: nvme\n\tKernel modules: nvme\n",
+  "lsusb": "Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub\nBus 001 Device 002: ID 413c:a001 Dell Computer Corp. iDRAC Virtual USB NIC\nBus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub\n",
+  "usb_bind": {
+    "1:1": "hub",
+    "1:2": null,
+    "2:1": "hub"
+  },
+  "dmesg": "mlx5_core 0000:03:00.0: Direct firmware load for mellanox/mlx5_fw.bin failed with error -2\n",
+  "dkms": "nvidia/580.82.07, 6.12.0-211.7.1.el10_2.x86_64, x86_64: installed-unbuilt\n",
+  "dnf_upgradable": "linux-firmware.noarch                    20260801-1.el10_2          rhel-10-for-x86_64-baseos-rpms\nmicrocode_ctl.x86_64                    2.1-61.el10_2             rhel-10-for-x86_64-baseos-rpms\nkmod-nvidia.x86_64                      3:580.82.07-1.el10_2      rhel-10-for-x86_64-appstream-rpms\nmesa-dri-drivers.x86_64                 25.0.7-1.el10_2           rhel-10-for-x86_64-appstream-rpms\ncurl.x86_64                             8.14.1-1.el10             rhel-10-for-x86_64-baseos-rpms\n",
+  "modinfo": {
+    "ast": "1.14.0",
+    "megaraid_sas": "07.725.02.00-rh1",
+    "bnxt_en": "1.10.3",
+    "nouveau": "1.0.0",
+    "nvme": "1.0"
+  }
+}

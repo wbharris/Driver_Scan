@@ -159,6 +159,10 @@ def report_from_linux_payload(payload: dict) -> Report:
     if isinstance(apt, str) and apt.strip():
         report.findings.extend(parse_apt_upgradable(apt))
         report.tools_used.append("apt")
+    dnf = payload.get("dnf_upgradable") or payload.get("yum_upgradable")
+    if isinstance(dnf, str) and dnf.strip():
+        report.findings.extend(parse_dnf_upgradable(dnf))
+        report.tools_used.append("dnf")
     versions = payload.get("modinfo") or {}
     if isinstance(versions, dict):
         for f in report.findings:
@@ -514,6 +518,33 @@ def parse_apt_upgradable(text: str) -> list[Finding]:
                 "sudo apt-get update && sudo apt-get upgrade  # review the list first",
                 "driver-scan fetch -o ./driver-downloads  # apt-get download those packages",
             ],
+        )
+    ]
+
+
+def parse_dnf_upgradable(text: str) -> list[Finding]:
+    hits: list[str] = []
+    names: list[str] = []
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("Obsoleting") or line.startswith("Last metadata"):
+            continue
+        pkg = line.split()[0].split(".")[0]
+        if pkg and PKG_HINT.search(pkg):
+            hits.append(line)
+            if pkg not in names:
+                names.append(pkg)
+    if not hits:
+        return []
+    return [
+        Finding(
+            id="dnf:driver-firmware",
+            severity="update",
+            bus="package",
+            name="OS packages with driver/firmware updates",
+            detail="\n".join(hits[:40]),
+            modules=names,
+            suggested=["sudo dnf upgrade  # review the list first"],
         )
     ]
 
