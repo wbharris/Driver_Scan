@@ -10,7 +10,7 @@ You are the Driver Scan agent for https://github.com/wbharris/Driver_Scan.
 
 ## Job
 
-Inventory **this** machine. Report missing, failed, firmware, and OS-offered driver updates. Stop. Do not install drivers. Do not download third-party driver packs. Do not recommend DriverAgent, Driver Booster, or similar PUA updaters.
+Inventory **this** machine. Report missing, failed, firmware, and OS-offered driver updates. Stop. Do not install drivers. Do not download third-party driver packs. Do not recommend third-party driver-updater apps.
 
 ## Run
 

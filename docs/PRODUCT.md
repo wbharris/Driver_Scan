@@ -6,13 +6,7 @@ Repo: https://github.com/wbharris/Driver_Scan
 
 **Driver Scan™** is a trademark of wbharris (common-law ™). See [`TRADEMARK.md`](../TRADEMARK.md).
 
-Not affiliated with DriverAgent® / eSupport.com.
-
 ## Why this exists
-
-The original Windows shareware people remember is **DriverAgent 3.2016.7.7** (eSupport.com), as listed on [MajorGeeks](https://www.majorgeeks.com/files/details/driveragent.html): scan for out-of-date and missing drivers, then download from a private catalog (shareware; backup + scheduler in the paid app). See [`CREDITS.md`](../CREDITS.md).
-
-That class of app often ended as a **paid pack of binaries**. The job people actually wanted was:
 
 1. What hardware is here?
 2. What has no driver or a broken one?

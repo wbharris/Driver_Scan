@@ -2,15 +2,13 @@
 
 A **GitHub agent** plus a small CLI that **inventories this machine** and reports **missing, error, firmware, and OS-offered driver updates** on **Linux and Windows**.
 
-Not a DriverAgent® clone. Not a third-party driver pack. It does **not** download or install vendor `.exe` / `.inf` blobs from the internet. Official sources only: Windows Update, the distro package manager, and the PC/chip maker’s support page.
+It does **not** download or install vendor `.exe` / `.inf` blobs from the internet. Official sources only: Windows Update, the distro package manager, and the PC/chip maker’s support page.
 
 Repo: https://github.com/wbharris/Driver_Scan
 
 Contract: [`docs/PRODUCT.md`](docs/PRODUCT.md). Copilot / coding-agent profile: [`.github/agents/driver-scan.md`](.github/agents/driver-scan.md).
 
 **Driver Scan™** is a trademark of wbharris (common-law ™). See [`TRADEMARK.md`](TRADEMARK.md).
-
-DriverAgent® is a trademark of its owner. This project is not affiliated with eSupport.com. Historical listing we used as the job description: [DriverAgent 3.2016.7.7 on MajorGeeks](https://www.majorgeeks.com/files/details/driveragent.html). See [`CREDITS.md`](CREDITS.md).
 
 ## What it finds
 
@@ -72,7 +70,7 @@ On GitHub.com Copilot coding agent / VS Code custom agents: select **Driver Scan
 - “Outdated” means the **OS** offered an update (apt / Windows Update), not a scraped commercial driver catalog.
 - Chipset bridges, ISA/PMC, and USB hubs are `skip`, not missing.
 - Firmware lines need `dmesg` or `journalctl` permission; if those fail, the report lists them under skipped tools.
-- Do not install random driver-updater apps. Prefer Windows Update, then Dell/HP/Lenovo/ASUS, then Intel/AMD/NVIDIA.
+- Prefer Windows Update, then Dell/HP/Lenovo/ASUS, then Intel/AMD/NVIDIA.
 
 ## License
 

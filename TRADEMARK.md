@@ -14,10 +14,6 @@ It does **not** grant rights to use the Driver Scan name as a product or
 company brand. Forks may say they are *derived from* Driver Scan; they
 should not call a competing product “Driver Scan”.
 
-**DriverAgent** / **DriverAgent Plus** are marks of their owners. This
-project is not affiliated with, endorsed by, or a replacement installer
-for those applications.
-
 ## Contact
 
 Owner: wbharris  
