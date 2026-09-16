@@ -10,7 +10,7 @@ Contract: [`docs/PRODUCT.md`](docs/PRODUCT.md). Copilot / coding-agent profile: 
 
 **Driver Scan™** is a trademark of wbharris (common-law ™). See [`TRADEMARK.md`](TRADEMARK.md).
 
-DriverAgent® is a trademark of its owner. This project is not affiliated with eSupport.com.
+DriverAgent® is a trademark of its owner. This project is not affiliated with eSupport.com. Historical listing we used as the job description: [DriverAgent 3.2016.7.7 on MajorGeeks](https://www.majorgeeks.com/files/details/driveragent.html). See [`CREDITS.md`](CREDITS.md).
 
 ## What it finds
 
