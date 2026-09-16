@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1
+
+- `--fixture FILE` replays a Windows collector JSON (Windows 11 simulation on Linux).
+- `tests/simulate_windows11.py` and `tests/data/windows11-dell.json` (Dell XPS 15 9530, 24H2).
+
 ## 0.4.0
 
 - `list` — every installed driver in one place, grouped by class (graphics, audio, network, storage, printer, imaging, …).

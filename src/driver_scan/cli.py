@@ -45,8 +45,7 @@ def main(argv: list[str] | None = None) -> int:
     bak.add_argument("--os", choices=("auto", "linux", "windows"), default="auto")
 
     loc = sub.add_parser("locate", help="Print official PC-maker / chip-vendor URLs for problems")
-    loc.add_argument("--os", choices=("auto", "linux", "windows"), default="auto")
-    loc.add_argument("--no-windows-update", action="store_true")
+    _add_view_flags(loc)
 
     fet = sub.add_parser(
         "fetch",
@@ -68,7 +67,8 @@ def main(argv: list[str] | None = None) -> int:
     rst.add_argument("--only", help="Restore only archive members whose names contain this string")
     rst.add_argument("--os", choices=("auto", "linux", "windows"), default="auto")
 
-    sub.add_parser("guide", help="Ordered next steps from a fresh scan")
+    g = sub.add_parser("guide", help="Ordered next steps from a fresh scan")
+    _add_view_flags(g)
 
     lst = sub.add_parser("list", help="All installed drivers in one place, by class")
     _add_view_flags(lst)
@@ -125,6 +125,11 @@ def _add_view_flags(p: argparse.ArgumentParser) -> None:
     )
     p.add_argument("--include-ignored", action="store_true", help="Do not apply the ignore list")
     p.add_argument(
+        "--fixture",
+        type=Path,
+        help="Replay a Windows collector JSON (simulate another PC from Linux)",
+    )
+    p.add_argument(
         "--no-windows-update",
         action="store_true",
         help="Skip Windows Update COM search (Windows only)",
@@ -143,6 +148,7 @@ def _scan_kwargs(args: argparse.Namespace) -> dict:
         "include_ignored": getattr(args, "include_ignored", False),
         "categories": getattr(args, "categories", None),
         "older_than_days": getattr(args, "older_than", None),
+        "fixture": getattr(args, "fixture", None),
     }
 
 
@@ -210,7 +216,7 @@ def _cmd_restore(args: argparse.Namespace) -> int:
 
 
 def _cmd_guide(args: argparse.Namespace) -> int:
-    report = scan(None)
+    report = scan(**_scan_kwargs(args))
     sys.stdout.write(guide_text(report))
     return 1 if report.problems() else 0
 

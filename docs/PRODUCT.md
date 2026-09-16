@@ -48,7 +48,7 @@ this machine
 
 | Command | Behavior |
 |---------|----------|
-| `scan` | Inventory + classify. Default if no subcommand. `--notify` for a desktop alert. `--category`, `--older-than DAYS` |
+| `scan` | Inventory + classify. Default if no subcommand. `--notify` for a desktop alert. `--category`, `--older-than DAYS`. `--fixture FILE` replays a Windows collector JSON |
 | `list` | All installed drivers grouped by class (see everything in one place) |
 | `guide` | Numbered playbook: backup, OS update, PC maker, vendor, restore |
 | `locate` | Print PC-maker URL and per-problem chip-vendor URLs |

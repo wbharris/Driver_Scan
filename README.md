@@ -83,6 +83,14 @@ driver-scan --os linux
 driver-scan --os windows --no-windows-update
 ```
 
+Simulate a Windows 11 PC from Linux (collector JSON, no Windows box required):
+
+```bash
+.venv/bin/python tests/simulate_windows11.py
+driver-scan --fixture tests/data/windows11-dell.json --include-ignored --problems-only
+driver-scan list --fixture tests/data/windows11-dell.json --include-ignored --category graphics
+```
+
 Exit code **1** if any `missing` / `error` / `firmware` / `update` finding exists, else **0**.
 
 On Windows without Python you can still dump JSON:

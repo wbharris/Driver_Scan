@@ -19,30 +19,52 @@ COLLECTOR = Path(__file__).with_name("windows_collect.ps1")
 
 
 def scan_windows(*, include_windows_update: bool = True) -> Report:
+    if detect_family() != "windows":
+        report = Report(
+            hostname=hostname(),
+            os=os_pretty(),
+            kernel=kernel(),
+            scanned_at=utc_now(),
+            notes=[
+                "Scan-only. Driver Scan does not download or install third-party driver packs.",
+                "Prefer Windows Update, then the PC maker (Dell/HP/Lenovo), then the chip vendor.",
+            ],
+        )
+        report.tools_skipped.append("windows-collect (not windows)")
+        return report
+
+    payload, skipped = collect_windows(include_windows_update=include_windows_update)
+    report = report_from_windows_payload(payload or {}, include_windows_update=include_windows_update)
+    report.tools_skipped.extend(skipped)
+    if payload is None:
+        report.notes.append("windows collect returned no payload")
+    return report
+
+
+def report_from_windows_payload(
+    payload: dict[str, Any],
+    *,
+    include_windows_update: bool = True,
+) -> Report:
     report = Report(
-        hostname=hostname(),
-        os=os_pretty(),
-        kernel=kernel(),
+        hostname=str(payload.get("hostname") or hostname()),
+        os=str(payload.get("os") or os_pretty()),
+        kernel=str(payload.get("kernel") or kernel()),
         scanned_at=utc_now(),
         notes=[
             "Scan-only. Driver Scan does not download or install third-party driver packs.",
             "Prefer Windows Update, then the PC maker (Dell/HP/Lenovo), then the chip vendor.",
         ],
     )
-    if detect_family() != "windows":
-        report.tools_skipped.append("windows-collect (not windows)")
-        return report
-
-    payload, skipped = collect_windows(include_windows_update=include_windows_update)
-    report.tools_skipped.extend(skipped)
-    if payload is None:
-        return report
-    report.tools_used.append("powershell")
-    report.findings.extend(findings_from_windows_payload(payload))
+    findings = findings_from_windows_payload(payload)
+    if not include_windows_update:
+        findings = [f for f in findings if not str(f.id).startswith("wu:")]
+    report.findings.extend(findings)
+    report.tools_used.append("windows-payload")
     if payload.get("windowsUpdateError"):
         report.notes.append(str(payload["windowsUpdateError"])[:300])
         report.tools_skipped.append("windows-update-search")
-    elif include_windows_update:
+    elif include_windows_update and any(str(f.id).startswith("wu:") for f in findings):
         report.tools_used.append("windows-update-search")
     apply_chassis(
         report,
