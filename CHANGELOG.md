@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.3
+
+- Linux collector fixtures (`family: linux` + lspci/lsusb/dmesg/apt text).
+- Ubuntu 26.04.1 LTS simulation (`tests/simulate_ubuntu2604.py`). 26.10 is not GA yet.
+
 ## 0.4.2
 
 - Windows Server 2025 Datacenter simulation (`tests/data/windowsserver2025-poweredge.json`, build 26100.33451).

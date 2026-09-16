@@ -119,6 +119,60 @@ def scan_linux() -> Report:
     return report
 
 
+def report_from_linux_payload(payload: dict) -> Report:
+    """Build a report from recorded lspci/lsusb/dmesg/apt text (no live probes)."""
+    report = Report(
+        hostname=str(payload.get("hostname") or hostname()),
+        os=str(payload.get("os") or os_pretty()),
+        kernel=str(payload.get("kernel") or kernel()),
+        scanned_at=utc_now(),
+        notes=[
+            "Scan-only. Driver Scan does not download or install third-party driver packs.",
+            "Use the OEM support page or the distro package manager for updates.",
+        ],
+    )
+    report.tools_used.append("linux-payload")
+    lspci = payload.get("lspci")
+    if isinstance(lspci, str) and lspci.strip():
+        report.findings.extend(parse_lspci(lspci))
+        report.tools_used.append("lspci")
+    lsusb = payload.get("lsusb")
+    if isinstance(lsusb, str) and lsusb.strip():
+        bind = payload.get("usb_bind") or {}
+        if not isinstance(bind, dict):
+            bind = {}
+        report.findings.extend(parse_lsusb(lsusb, {str(k): v for k, v in bind.items()}))
+        report.tools_used.append("lsusb")
+    dmesg = payload.get("dmesg") or payload.get("firmware_log")
+    if isinstance(dmesg, str) and dmesg.strip():
+        report.findings.extend(parse_firmware_log(dmesg, source="dmesg"))
+        report.tools_used.append("dmesg")
+    dkms = payload.get("dkms")
+    if isinstance(dkms, str) and dkms.strip():
+        report.findings.extend(parse_dkms(dkms))
+        report.tools_used.append("dkms")
+    ubuntu = payload.get("ubuntu_drivers")
+    if isinstance(ubuntu, str) and ubuntu.strip():
+        report.findings.extend(parse_ubuntu_drivers(ubuntu))
+        report.tools_used.append("ubuntu-drivers")
+    apt = payload.get("apt_upgradable")
+    if isinstance(apt, str) and apt.strip():
+        report.findings.extend(parse_apt_upgradable(apt))
+        report.tools_used.append("apt")
+    versions = payload.get("modinfo") or {}
+    if isinstance(versions, dict):
+        for f in report.findings:
+            if f.driver and versions.get(f.driver):
+                f.version = str(versions[f.driver])
+    apply_chassis(
+        report,
+        str(payload.get("manufacturer") or "") or None,
+        str(payload.get("model") or "") or None,
+        str(payload.get("serial") or "") or None,
+    )
+    return report
+
+
 def _tool(report: Report, name: str, argv: list[str], timeout: int = 20) -> str | None:
     if not which(argv[0]):
         report.tools_skipped.append(name)

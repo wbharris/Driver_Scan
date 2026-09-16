@@ -5,7 +5,7 @@ from pathlib import Path
 
 from driver_scan.filters import apply_view_filters
 from driver_scan.ignore import apply_ignore, load_ignored
-from driver_scan.linux import scan_linux
+from driver_scan.linux import report_from_linux_payload, scan_linux
 from driver_scan.models import Report
 from driver_scan.util import detect_family
 from driver_scan.windows import report_from_windows_payload, scan_windows
@@ -24,9 +24,13 @@ def scan(
         payload = json.loads(Path(fixture).read_text(encoding="utf-8"))
         if not isinstance(payload, dict):
             raise ValueError(f"fixture {fixture} is not a JSON object")
-        report = report_from_windows_payload(
-            payload, include_windows_update=include_windows_update
-        )
+        fam = str(payload.get("family") or "").lower()
+        if fam == "linux" or "lspci" in payload:
+            report = report_from_linux_payload(payload)
+        else:
+            report = report_from_windows_payload(
+                payload, include_windows_update=include_windows_update
+            )
         report.notes.append(f"fixture {Path(fixture).resolve()}")
     else:
         fam = (family or detect_family()).lower()

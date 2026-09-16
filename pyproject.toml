@@ -1,6 +1,6 @@
 [project]
 name = "driver-scan"
-version = "0.4.2"
+version = "0.4.3"
 description = "Driver Scan™ — find missing, error, and update-available device drivers on Linux and Windows. Official sources only."
 readme = "README.md"
 requires-python = ">=3.11"

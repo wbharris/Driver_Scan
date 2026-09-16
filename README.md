@@ -88,9 +88,11 @@ Simulate Windows from Linux (collector JSON, no Windows box required):
 ```bash
 .venv/bin/python tests/simulate_windows11.py
 .venv/bin/python tests/simulate_windowsserver2025.py
+.venv/bin/python tests/simulate_ubuntu2604.py
 driver-scan --fixture tests/data/windows11-dell.json --include-ignored --problems-only
 driver-scan --fixture tests/data/windowsserver2025-poweredge.json --include-ignored --problems-only
-driver-scan list --fixture tests/data/windowsserver2025-poweredge.json --include-ignored --category storage
+driver-scan --fixture tests/data/ubuntu-26.04.1-xps.json --include-ignored --problems-only
+driver-scan list --fixture tests/data/ubuntu-26.04.1-xps.json --include-ignored --category graphics
 ```
 
 Exit code **1** if any `missing` / `error` / `firmware` / `update` finding exists, else **0**.

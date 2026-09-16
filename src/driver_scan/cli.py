@@ -127,7 +127,7 @@ def _add_view_flags(p: argparse.ArgumentParser) -> None:
     p.add_argument(
         "--fixture",
         type=Path,
-        help="Replay a Windows collector JSON (simulate another PC from Linux)",
+        help="Replay a collector JSON (Windows PnP payload or Linux lspci/lsusb text)",
     )
     p.add_argument(
         "--no-windows-update",
