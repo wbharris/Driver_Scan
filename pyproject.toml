@@ -1,0 +1,33 @@
+[project]
+name = "driver-scan"
+version = "0.1.0"
+description = "Driver Scan™ — find missing, error, and update-available device drivers on Linux and Windows. Official sources only."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "GPL-3.0-or-later" }
+authors = [{ name = "wbharris" }]
+keywords = ["drivers", "hardware", "pci", "usb", "windows", "linux"]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/wbharris/Driver_Scan"
+Repository = "https://github.com/wbharris/Driver_Scan"
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+driver-scan = "driver_scan.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+driver_scan = ["windows_collect.ps1"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
