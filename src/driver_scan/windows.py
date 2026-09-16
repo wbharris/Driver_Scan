@@ -146,12 +146,14 @@ def _device_finding(dev: dict[str, Any], signed: dict[str, dict[str, Any]]) -> F
     driver = None
     extra = ""
     version = None
+    driver_date = None
     if signed_row:
         driver = str(signed_row.get("infName") or "") or None
         ver = signed_row.get("driverVersion")
         date = signed_row.get("driverDate")
         extra = f" Signed driver {ver or '?'} ({date or 'no date'})."
         version = str(ver) if ver else None
+        driver_date = str(date)[:10] if date else None
 
     why = windows_mismatch(name=name, class_name=class_name, code=code, category=cat)
     if code in CM_MISSING or (status.lower() == "error" and code == 28):
@@ -194,6 +196,7 @@ def _device_finding(dev: dict[str, Any], signed: dict[str, dict[str, Any]]) -> F
         device_id=did.lower() if did else None,
         driver=driver,
         version=version,
+        driver_date=driver_date,
         official_url=url,
         category=cat,  # type: ignore[arg-type]
         suggested=suggested,

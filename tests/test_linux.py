@@ -15,6 +15,7 @@ LSPCI = """
 
 LSUSB = """
 Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 002: ID 1bcf:2b96 Sunplus Innovation Technology Inc. Integrated_Webcam_HD
 Bus 001 Device 003: ID 8087:0a2b Intel Corp. Bluetooth wireless interface
 Bus 001 Device 004: ID 0a5c:5834 Broadcom Corp. 5880
 """
@@ -47,10 +48,13 @@ def test_nouveau_is_mismatch():
 
 
 def test_lsusb_hub_vs_unbound():
-    bound = {"1:1": "hub", "1:3": "btusb", "1:4": None}
+    bound = {"1:1": "hub", "1:2": "uvcvideo", "1:3": "btusb", "1:4": None}
     findings = parse_lsusb(LSUSB, bound)
     kinds = {f.name: f.severity for f in findings}
     assert kinds["Linux Foundation 2.0 root hub"] == "skip"
+    cam = [f for f in findings if "Webcam" in f.name][0]
+    assert cam.category == "imaging"
+    assert cam.severity == "ok"
     assert kinds["Intel Corp. Bluetooth wireless interface"] == "ok"
     assert kinds["Broadcom Corp. 5880"] == "missing"
 

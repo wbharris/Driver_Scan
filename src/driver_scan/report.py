@@ -5,7 +5,17 @@ import json
 from driver_scan.models import PROBLEM_SEVERITIES, Finding, Report
 
 ORDER = ("missing", "error", "mismatch", "firmware", "update", "ok", "skip")
-CAT_ORDER = ("graphics", "audio", "network", "storage", "chipset", "usb", "other")
+CAT_ORDER = (
+    "graphics",
+    "audio",
+    "network",
+    "storage",
+    "printer",
+    "imaging",
+    "chipset",
+    "usb",
+    "other",
+)
 
 
 def render_markdown(report: Report, *, problems_only: bool = False) -> str:
@@ -115,6 +125,30 @@ def render_text(report: Report, *, problems_only: bool = False) -> str:
         lines.append("")
         lines.append("skipped: " + ", ".join(report.tools_skipped))
     return "\n".join(lines) + "\n"
+
+
+def render_list(report: Report) -> str:
+    """All installed drivers in one place, grouped by class."""
+    lines = [
+        f"Driver Scan list  {report.hostname}  {report.os}",
+        f"devices={len(report.findings)}  problems={len(report.problems())}",
+        "",
+    ]
+    by: dict[str, list[Finding]] = {c: [] for c in CAT_ORDER}
+    for f in report.findings:
+        by.setdefault(f.category, []).append(f)
+    for cat in list(by):
+        rows = by[cat]
+        if not rows:
+            continue
+        lines.append(f"## {cat} ({len(rows)})")
+        for f in rows:
+            ver = f.version or "-"
+            date = f.driver_date or "-"
+            drv = f.driver or "-"
+            lines.append(f"  [{f.severity:8}] {f.name}  {drv}  {ver}  {date}")
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def render_json(report: Report, *, problems_only: bool = False) -> str:

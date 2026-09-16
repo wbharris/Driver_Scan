@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from driver_scan.classify import category_from_pci, linux_mismatch
+from driver_scan.classify import category_from_pci, category_from_usb_name, linux_mismatch
 from driver_scan.models import Finding, Report, utc_now
 from driver_scan.oem import apply_chassis, read_dmi
 from driver_scan.util import detect_family, hostname, kernel, os_pretty, run, which
@@ -290,6 +290,7 @@ def parse_lsusb(text: str, bound: dict[str, str | None]) -> list[Finding]:
         driver = bound.get(key)
         fid = f"usb:{key}:{vid}"
         url = official_url(ven, name)
+        cat = category_from_usb_name(name)
         skip = vid in USB_HUB_IDS or any(s in name.lower() for s in USB_SKIP_NAMES)
         if skip:
             findings.append(
@@ -303,7 +304,7 @@ def parse_lsusb(text: str, bound: dict[str, str | None]) -> list[Finding]:
                     device_id=prod,
                     driver=driver,
                     official_url=url,
-                    category="usb",
+                    category=cat,  # type: ignore[arg-type]
                 )
             )
             continue
@@ -319,7 +320,7 @@ def parse_lsusb(text: str, bound: dict[str, str | None]) -> list[Finding]:
                     device_id=prod,
                     driver=driver,
                     official_url=url,
-                    category="usb",
+                    category=cat,  # type: ignore[arg-type]
                 )
             )
             continue
@@ -333,7 +334,7 @@ def parse_lsusb(text: str, bound: dict[str, str | None]) -> list[Finding]:
                 vendor_id=ven,
                 device_id=prod,
                 official_url=url,
-                category="usb",
+                category=cat,  # type: ignore[arg-type]
                 suggested=[
                     f"Look up USB ID {vid} on the OEM or vendor support page.",
                     f"Vendor page: {url}" if url else "Identify the chassis OEM (Dell/HP/Lenovo) support site.",

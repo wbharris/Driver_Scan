@@ -6,7 +6,17 @@ from typing import Any, Literal
 
 Severity = Literal["missing", "error", "mismatch", "firmware", "update", "ok", "skip"]
 Bus = Literal["pci", "usb", "pnp", "package", "firmware", "dkms", "system"]
-Category = Literal["graphics", "audio", "network", "chipset", "storage", "usb", "other"]
+Category = Literal[
+    "graphics",
+    "audio",
+    "network",
+    "chipset",
+    "storage",
+    "usb",
+    "printer",
+    "imaging",
+    "other",
+]
 
 PROBLEM_SEVERITIES = frozenset({"missing", "error", "mismatch", "firmware", "update"})
 
@@ -22,6 +32,7 @@ class Finding:
     device_id: str | None = None
     driver: str | None = None
     version: str | None = None
+    driver_date: str | None = None
     modules: list[str] = field(default_factory=list)
     official_url: str | None = None
     category: Category = "other"

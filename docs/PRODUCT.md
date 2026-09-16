@@ -48,12 +48,14 @@ this machine
 
 | Command | Behavior |
 |---------|----------|
-| `scan` | Inventory + classify. Default if no subcommand. `--notify` for a desktop alert. |
+| `scan` | Inventory + classify. Default if no subcommand. `--notify` for a desktop alert. `--category`, `--older-than DAYS` |
+| `list` | All installed drivers grouped by class (see everything in one place) |
 | `guide` | Numbered playbook: backup, OS update, PC maker, vendor, restore |
 | `locate` | Print PC-maker URL and per-problem chip-vendor URLs |
 | `fetch` | `LINKS.txt`; Linux also `apt-get download` matching firmware/driver packages |
 | `backup` | Zip report + driver store export (Windows) or lspci/lsusb/modprobe.d/dkms (Linux) |
-| `restore` | Dry-run a backup zip; `--apply` restores Linux configs or Windows INF via pnputil |
+| `restore` | Dry-run a backup zip; `--apply` restores Linux configs or Windows INF via pnputil (Windows restore point first). `--only` |
+| `ignore` | Persist device ids that should not count as problems |
 | `schedule install\|status\|remove` | Hourly/daily/weekly scan; optional `--backup` `--notify` |
 
 ## Collectors

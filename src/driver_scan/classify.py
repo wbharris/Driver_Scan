@@ -42,11 +42,26 @@ def category_from_pnp(class_name: str, name: str = "") -> Category:
         return "network"
     if c in {"scsiadapter", "hdc", "nvme"} or "nvme" in n or "sata" in n or "ahci" in n:
         return "storage"
+    if c in {"printer", "printqueue"} or "printer" in n:
+        return "printer"
+    if c in {"image", "camera"} or "webcam" in n or "scanner" in n or "camera" in n:
+        return "imaging"
     if c in {"usb", "usbdevice"}:
         return "usb"
     if c in {"system", "computer", "processor"}:
         return "chipset"
     return "other"
+
+
+def category_from_usb_name(name: str) -> Category:
+    n = (name or "").lower()
+    if "printer" in n:
+        return "printer"
+    if "webcam" in n or "camera" in n or "scanner" in n:
+        return "imaging"
+    if "hub" in n or "root hub" in n:
+        return "usb"
+    return "usb"
 
 
 def linux_mismatch(vendor_id: str | None, driver: str | None, category: str) -> str | None:

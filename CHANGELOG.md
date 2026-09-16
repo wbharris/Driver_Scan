@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0
+
+- `list` — every installed driver in one place, grouped by class (graphics, audio, network, storage, printer, imaging, …).
+- `--category` and `--older-than DAYS` view filters (age is inventory, not a fake “outdated” catalog).
+- `ignore add|remove|list` so a device can be hidden from problem counts.
+- `restore --only` for a subset; Windows `--apply` tries a System Restore point first.
+
 ## 0.3.0
 
 - `mismatch` for generic/fallback or OS-incompatible drivers (graphics/audio/network/chipset classes on the report).

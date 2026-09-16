@@ -16,6 +16,8 @@ def test_help_and_version(capsys):
     assert "fetch" in out.lower()
     assert "restore" in out.lower()
     assert "guide" in out.lower()
+    assert "list" in out.lower()
+    assert "ignore" in out.lower()
 
 
 def test_renderers():

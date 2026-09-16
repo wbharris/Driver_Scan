@@ -15,12 +15,14 @@ Contract: [`docs/PRODUCT.md`](docs/PRODUCT.md). Copilot / coding-agent profile: 
 | Command | Job |
 |---------|-----|
 | `driver-scan` / `scan` | Fast inventory: missing, mismatched, error, firmware, OS-offered updates |
-| `driver-scan --html` | Stand-alone results page (graphics / audio / network / chipset / …) |
+| `list` | Every installed driver in one place, grouped by class |
+| `driver-scan --html` | Stand-alone results page (graphics / audio / network / printer / imaging / …) |
 | `guide` | Ordered next steps (backup → OS update → PC maker → vendor → restore) |
 | `locate` | Official PC-maker and chip-vendor URLs for problem devices |
 | `fetch -o DIR` | Write `LINKS.txt`; on Linux `apt-get download` firmware/driver packages into DIR |
 | `backup -o FILE.zip` | Zip the report plus a driver/config snapshot |
-| `restore FILE.zip` | Dry-run restore; `--apply` writes Linux configs or Windows `pnputil /add-driver` |
+| `restore FILE.zip` | Dry-run restore; `--apply` writes Linux configs or Windows `pnputil /add-driver` (tries a System Restore point first). `--only NAME` for a subset |
+| `ignore add\|remove\|list` | Hide a device from problem counts |
 | `schedule install` | Repeat the scan; optional `--backup --notify` |
 | `scan --notify` | Desktop notify when the scan finds problems |
 
@@ -65,8 +67,12 @@ driver-scan fetch -o ./driver-downloads
 driver-scan backup -o ./drivers.zip
 driver-scan restore ./drivers.zip
 driver-scan restore ./drivers.zip --apply
+driver-scan list
+driver-scan list --category graphics --older-than 365
+driver-scan ignore add pci:02:00.0
 driver-scan guide
 driver-scan --notify
+driver-scan --category printer --category imaging
 driver-scan schedule install --every daily --backup --notify
 driver-scan schedule status
 driver-scan schedule remove

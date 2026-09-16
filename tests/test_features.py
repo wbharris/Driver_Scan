@@ -1,7 +1,9 @@
 import zipfile
 
 from driver_scan.backup import backup, restore
+from driver_scan.filters import apply_view_filters
 from driver_scan.guide import guide_text
+from driver_scan.ignore import add_ignore, apply_ignore, load_ignored
 from driver_scan.fetch import locate_text
 from driver_scan.linux import parse_apt_package_names
 from driver_scan.models import Finding, Report
@@ -108,3 +110,53 @@ def test_guide_lists_backup_then_restore():
     assert "backup" in text
     assert "mismatch" in text
     assert "restore" in text
+
+
+def test_ignore_roundtrip(tmp_path):
+    path = tmp_path / "ignore.txt"
+    add_ignore("pci:02:00.0", path)
+    add_ignore("8086:24fd", path)
+    assert load_ignored(path) == ["8086:24fd", "pci:02:00.0"]
+    report = Report(
+        hostname="box",
+        os="Kali",
+        kernel="7",
+        scanned_at="2026-01-01T00:00:00Z",
+        findings=[
+            Finding(id="pci:02:00.0", severity="missing", bus="pci", name="Wi-Fi", detail="unbound"),
+        ],
+    )
+    assert apply_ignore(report, load_ignored(path)) == 1
+    assert report.findings[0].severity == "skip"
+
+
+def test_older_than_and_category_filters():
+    report = Report(
+        hostname="box",
+        os="Kali",
+        kernel="7",
+        scanned_at="2026-01-01T00:00:00Z",
+        findings=[
+            Finding(
+                id="a",
+                severity="ok",
+                bus="pnp",
+                name="old gpu",
+                detail="x",
+                category="graphics",
+                driver_date="2018-01-01",
+            ),
+            Finding(
+                id="b",
+                severity="ok",
+                bus="pnp",
+                name="new gpu",
+                detail="x",
+                category="graphics",
+                driver_date="2026-09-01",
+            ),
+            Finding(id="c", severity="ok", bus="pnp", name="nic", detail="x", category="network"),
+        ],
+    )
+    apply_view_filters(report, categories=["graphics"], older_than_days=365)
+    assert [f.id for f in report.findings] == ["a"]

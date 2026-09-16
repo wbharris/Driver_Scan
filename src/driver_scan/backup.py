@@ -7,7 +7,7 @@ from pathlib import Path
 
 from driver_scan.report import render_json, render_markdown
 from driver_scan.scan import scan
-from driver_scan.util import detect_family, hostname, run, which
+from driver_scan.util import detect_family, hostname, powershell_exe, run, which
 
 
 def backup(dest: Path | None = None, *, family: str | None = None) -> tuple[Path, list[str]]:
@@ -80,12 +80,32 @@ def _windows_export(folder: Path, staging: dict[str, bytes], notes: list[str]) -
     notes.append("exported Windows driver store via pnputil")
 
 
+def _windows_restore_point(description: str) -> list[str]:
+    exe = powershell_exe()
+    if not exe:
+        return ["no powershell; skipped System Restore point"]
+    code, out, err = run(
+        [
+            exe,
+            "-NoProfile",
+            "-NonInteractive",
+            "-Command",
+            f'Checkpoint-Computer -Description "{description}" -RestorePointType MODIFY_SETTINGS',
+        ],
+        timeout=90,
+    )
+    if code == 0:
+        return [f"Windows restore point: {description}"]
+    return [f"restore point skipped: {(err or out).strip().splitlines()[:1] or code}"]
+
+
 def restore(
     archive: Path,
     *,
     apply: bool = False,
     dest_root: Path | None = None,
     family: str | None = None,
+    only: str | None = None,
 ) -> list[str]:
     archive = archive.expanduser().resolve()
     if not archive.is_file():
@@ -96,6 +116,10 @@ def restore(
         names = zf.namelist()
         infs = [n for n in names if n.lower().endswith(".inf") and n.startswith("drivers/")]
         confs = [n for n in names if n.startswith("modprobe.d/") or n.startswith("modules-load.d/")]
+        if only:
+            infs = [n for n in infs if only.lower() in n.lower()]
+            confs = [n for n in confs if only.lower() in n.lower()]
+            notes.append(f"filter --only {only!r}: {len(infs)} inf / {len(confs)} configs")
         if fam == "windows":
             notes.extend(_restore_windows(zf, infs, apply=apply))
         else:
@@ -112,6 +136,7 @@ def _restore_windows(zf: zipfile.ZipFile, infs: list[str], *, apply: bool) -> li
         notes.append("dry-run; pass --apply as Administrator to pnputil /add-driver")
         notes.extend(infs[:20])
         return notes
+    notes.extend(_windows_restore_point("Driver Scan restore"))
     pnputil = which("pnputil") or which("pnputil.exe")
     if not pnputil:
         notes.append("pnputil not found")
