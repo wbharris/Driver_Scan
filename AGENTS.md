@@ -4,7 +4,8 @@ This repository is the **Driver Scan** product: a CLI plus a GitHub custom agent
 
 Read `docs/PRODUCT.md` before changing classification rules.
 
-- CLI entry: `driver-scan` → `driver_scan.cli:main` (`scan`, `list`, `guide`, `locate`, `fetch`, `backup`, `restore`, `ignore`, `schedule`)
+- CLI entry: `driver-scan` → `driver_scan.cli:main` (`scan`, `list`, `guide`, `locate`, `fetch`, `backup`, `restore`, `ignore`, `schedule`, `redact`)
+- Live Windows capture without a clone: `docs/LIVE-WINDOWS.md`. Never commit unredacted `*live.json` (serial).
 - Linux parse/collect: `src/driver_scan/linux.py`
 - Windows parse: `src/driver_scan/windows.py` + `windows_collect.ps1`
 - Official URLs: `src/driver_scan/vendors.py` only

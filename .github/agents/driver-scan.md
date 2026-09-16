@@ -31,13 +31,16 @@ py -3 -m venv .venv
 .\.venv\Scripts\driver-scan --markdown --problems-only
 ```
 
-If Python is missing on Windows, run:
+If Python is missing on Windows, do **not** use a relative `-File src\...` (fails unless cwd is the clone). Download the collector and write an absolute `-OutFile` (see `docs/LIVE-WINDOWS.md`):
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File src\driver_scan\windows_collect.ps1 -IncludeWindowsUpdate
+$script = Join-Path $env:TEMP "windows_collect.ps1"
+$out = Join-Path $env:USERPROFILE "Desktop\dell-live.json"
+Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/wbharris/Driver_Scan/main/src/driver_scan/windows_collect.ps1" -OutFile $script
+powershell -NoProfile -ExecutionPolicy Bypass -File $script -IncludeWindowsUpdate -OutFile $out
 ```
 
-Then summarize the JSON.
+Then copy the JSON to a machine with `driver-scan`, `redact` serials, and `--fixture` for HTML/markdown. Do not commit unredacted live JSON.
 
 ## How to answer
 

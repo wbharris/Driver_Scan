@@ -99,10 +99,28 @@ driver-scan list --fixture tests/data/ubuntu-26.04.1-xps.json --include-ignored 
 
 Exit code **1** if any `missing` / `error` / `firmware` / `update` finding exists, else **0**.
 
-On Windows without Python you can still dump JSON:
+On Windows without Python you can still dump JSON. **Do not** use a relative `-File src\...` unless you are already in the clone root — that is what broke the Latitude 5490 capture. Full procedure: [`docs/LIVE-WINDOWS.md`](docs/LIVE-WINDOWS.md).
+
+No clone (absolute `-File` + Desktop `-OutFile`):
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File src\driver_scan\windows_collect.ps1 -IncludeWindowsUpdate
+$script = Join-Path $env:TEMP "windows_collect.ps1"
+$out = Join-Path $env:USERPROFILE "Desktop\dell-live.json"
+Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/wbharris/Driver_Scan/main/src/driver_scan/windows_collect.ps1" -OutFile $script
+powershell -NoProfile -ExecutionPolicy Bypass -File $script -IncludeWindowsUpdate -OutFile $out
+```
+
+From a clone, repo root only:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "$PWD\src\driver_scan\windows_collect.ps1" -IncludeWindowsUpdate -OutFile "$env:USERPROFILE\Desktop\dell-live.json"
+```
+
+Redact the serial, then classify on a machine with `driver-scan` (`--html -o` creates `cases\` if needed):
+
+```bash
+.venv/bin/driver-scan redact dell-live.json -o tests/data/windows11-live.json
+.venv/bin/driver-scan --fixture tests/data/windows11-live.json --include-ignored --html -o cases/live.html
 ```
 
 ## Agent

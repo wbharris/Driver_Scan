@@ -10,3 +10,5 @@ build/
 htmlcov/
 cases/
 *.md.bak
+*live.json
+dell-live.json

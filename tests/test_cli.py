@@ -18,6 +18,7 @@ def test_help_and_version(capsys):
     assert "guide" in out.lower()
     assert "list" in out.lower()
     assert "ignore" in out.lower()
+    assert "redact" in out.lower()
 
 
 def test_older_than_negative_cli(capsys):

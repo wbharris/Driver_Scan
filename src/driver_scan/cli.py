@@ -9,6 +9,7 @@ from driver_scan.backup import backup, restore
 from driver_scan.fetch import fetch, locate_text
 from driver_scan.guide import guide_text
 from driver_scan.ignore import add_ignore, load_ignored, remove_ignore
+from driver_scan.redact import redact_obj
 from driver_scan.report import render_html, render_json, render_list, render_markdown, render_text
 from driver_scan.scan import scan
 from driver_scan.schedule import install as schedule_install
@@ -16,7 +17,7 @@ from driver_scan.schedule import remove as schedule_remove
 from driver_scan.schedule import status as schedule_status
 from driver_scan.util import notify as desktop_notify
 
-COMMANDS = ("scan", "backup", "schedule", "locate", "fetch", "restore", "guide", "list", "ignore")
+COMMANDS = ("scan", "backup", "schedule", "locate", "fetch", "restore", "guide", "list", "ignore", "redact")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -77,6 +78,10 @@ def main(argv: list[str] | None = None) -> int:
     ign.add_argument("action", choices=("list", "add", "remove"))
     ign.add_argument("id", nargs="?", help="Finding id, name, or vendor:device")
 
+    red = sub.add_parser("redact", help="Blank serial fields in a collector JSON before sharing or committing")
+    red.add_argument("input", type=Path)
+    red.add_argument("-o", "--output", type=Path, help="Write here (default: overwrite input)")
+
     args = parser.parse_args(argv)
     if args.cmd == "scan":
         return _cmd_scan(args)
@@ -96,6 +101,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_list(args)
     if args.cmd == "ignore":
         return _cmd_ignore(args)
+    if args.cmd == "redact":
+        return _cmd_redact(args)
     return 2
 
 
@@ -173,6 +180,7 @@ def _cmd_scan(args: argparse.Namespace) -> int:
     else:
         body = render_text(report, problems_only=args.problems_only)
     if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(body, encoding="utf-8")
         sys.stderr.write(f"wrote {args.output}\n")
     sys.stdout.write(body)
@@ -249,6 +257,19 @@ def _cmd_ignore(args: argparse.Namespace) -> int:
         return 2
     ids = add_ignore(args.id) if args.action == "add" else remove_ignore(args.id)
     sys.stdout.write("\n".join(ids) + ("\n" if ids else "(empty)\n"))
+    return 0
+
+
+def _cmd_redact(args: argparse.Namespace) -> int:
+    import json
+
+    src = args.input.expanduser()
+    data = json.loads(src.read_text(encoding="utf-8"))
+    redacted = redact_obj(data)
+    dest = (args.output or src).expanduser()
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(json.dumps(redacted, indent=2) + "\n", encoding="utf-8")
+    sys.stdout.write(f"wrote {dest}\n")
     return 0
 
 

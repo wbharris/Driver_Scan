@@ -3,7 +3,8 @@
 # Does not require Administrator. CIM/WU failures are recorded on the payload.
 [CmdletBinding()]
 param(
-    [switch]$IncludeWindowsUpdate
+    [switch]$IncludeWindowsUpdate,
+    [string]$OutFile
 )
 
 $ErrorActionPreference = "Continue"
@@ -123,4 +124,15 @@ if ($IncludeWindowsUpdate) {
     }
 }
 
-$payload | ConvertTo-Json -Depth 6 -Compress
+$json = $payload | ConvertTo-Json -Depth 6 -Compress
+if ($OutFile) {
+    $dest = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutFile)
+    $parent = Split-Path -Parent $dest
+    if ($parent -and -not (Test-Path -LiteralPath $parent)) {
+        New-Item -ItemType Directory -Path $parent -Force | Out-Null
+    }
+    [System.IO.File]::WriteAllText($dest, $json, [System.Text.UTF8Encoding]::new($false))
+    Write-Host "wrote $dest"
+} else {
+    Write-Output $json
+}

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.8
+
+- Windows live capture: collector `-OutFile`, README no-clone absolute `-File`, `docs/LIVE-WINDOWS.md`.
+- `driver-scan -o` creates parent dirs (`cases\`).
+- `driver-scan redact` blanks serials. `*live.json` is gitignored.
+
 ## 0.4.7
 
 - Scheduled Linux runner captures scan status 1 so backup/notify still run; Windows runner preserves the same status.

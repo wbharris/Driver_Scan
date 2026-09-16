@@ -56,6 +56,7 @@ this machine
 | `backup` | Zip report + driver store export (Windows) or lspci/lsusb/modprobe.d/dkms (Linux) |
 | `restore` | Dry-run a backup zip; `--apply` restores Linux configs or Windows INF via pnputil (Windows restore point first). `--only` |
 | `ignore` | Persist device ids that should not count as problems |
+| `redact` | Blank serial fields in collector JSON before share/commit |
 | `schedule install\|status\|remove` | Hourly/daily/weekly scan; optional `--backup` `--notify` |
 
 ## Collectors
