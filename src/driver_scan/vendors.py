@@ -61,3 +61,12 @@ def vendor_label(vendor_id: str | None) -> str | None:
         return None
     hit = VENDOR_SUPPORT.get(vendor_id.lower())
     return hit[0] if hit else None
+
+
+def oem_from_text(text: str) -> tuple[str | None, str | None]:
+    """Return (label, support_url) from chassis vendor/model text."""
+    lowered = f" {text.lower()} "
+    for needle, label, url in OEM_BY_NAME:
+        if needle in lowered:
+            return label, url
+    return None, None

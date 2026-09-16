@@ -20,6 +20,7 @@ class Finding:
     vendor_id: str | None = None
     device_id: str | None = None
     driver: str | None = None
+    version: str | None = None
     modules: list[str] = field(default_factory=list)
     official_url: str | None = None
     suggested: list[str] = field(default_factory=list)
@@ -34,6 +35,10 @@ class Report:
     os: str
     kernel: str
     scanned_at: str
+    oem: str | None = None
+    model: str | None = None
+    serial: str | None = None
+    oem_url: str | None = None
     findings: list[Finding] = field(default_factory=list)
     tools_used: list[str] = field(default_factory=list)
     tools_skipped: list[str] = field(default_factory=list)

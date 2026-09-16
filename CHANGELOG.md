@@ -1,7 +1,16 @@
 # Changelog
 
+## 0.2.0
+
+- Chassis OEM from DMI / WMI (PC-maker support URL on the report).
+- HTML results page (`--html`).
+- `locate` official URLs; `fetch` writes `LINKS.txt` and on Linux `apt-get download`s firmware/driver packages.
+- `backup` zip (Windows `pnputil /export-driver`, Linux report + modprobe.d / dkms / lspci).
+- `schedule install|status|remove` (systemd --user or Task Scheduler), optional backup and notify.
+- Bound-driver versions via `modinfo` / signed-driver version.
+
 ## 0.1.0
 
 - First cut: Linux (`lspci` / `lsusb` / firmware log / apt / dkms) and Windows (PnP + optional Windows Update driver search).
 - CLI `driver-scan`, JSON/markdown/text reports, GitHub custom agent at `.github/agents/driver-scan.md`.
-- Official OEM/chip-vendor URLs only. No third-party driver packs.
+- Official OEM/chip-vendor URLs only.

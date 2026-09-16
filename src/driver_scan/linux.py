@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 
 from driver_scan.models import Finding, Report, utc_now
+from driver_scan.oem import apply_chassis, read_dmi
 from driver_scan.util import detect_family, hostname, kernel, os_pretty, run, which
 from driver_scan.vendors import official_url
 
@@ -112,6 +113,8 @@ def scan_linux() -> Report:
     else:
         report.tools_skipped.append("apt")
 
+    annotate_modinfo(report.findings)
+    apply_chassis(report, *read_dmi())
     return report
 
 
@@ -402,14 +405,20 @@ def parse_ubuntu_drivers(text: str) -> list[Finding]:
     return findings
 
 
-def parse_apt_upgradable(text: str) -> list[Finding]:
-    hits: list[str] = []
+def parse_apt_package_names(text: str) -> list[str]:
+    names: list[str] = []
     for raw in text.splitlines():
         pkg = raw.split("/", 1)[0].strip()
-        if pkg and PKG_HINT.search(pkg):
-            hits.append(raw.strip())
+        if pkg and PKG_HINT.search(pkg) and pkg not in names:
+            names.append(pkg)
+    return names
+
+
+def parse_apt_upgradable(text: str) -> list[Finding]:
+    hits = [ln.strip() for ln in text.splitlines() if ln.strip() and PKG_HINT.search(ln.split("/", 1)[0])]
     if not hits:
         return []
+    pkgs = parse_apt_package_names("\n".join(hits))
     return [
         Finding(
             id="apt:driver-firmware",
@@ -417,6 +426,27 @@ def parse_apt_upgradable(text: str) -> list[Finding]:
             bus="package",
             name="OS packages with driver/firmware updates",
             detail="\n".join(hits[:40]),
-            suggested=["sudo apt-get update && sudo apt-get upgrade  # review the list first"],
+            modules=pkgs,
+            suggested=[
+                "sudo apt-get update && sudo apt-get upgrade  # review the list first",
+                "driver-scan fetch -o ./driver-downloads  # apt-get download those packages",
+            ],
         )
     ]
+
+
+def annotate_modinfo(findings: list[Finding]) -> None:
+    if not which("modinfo"):
+        return
+    cache: dict[str, str] = {}
+    for f in findings:
+        name = f.driver
+        if not name:
+            continue
+        if name not in cache:
+            code, out, _err = run(["modinfo", "-F", "version", name], timeout=5)
+            cache[name] = out.strip() if code == 0 else ""
+        if cache[name]:
+            f.version = cache[name]
+            if "version" not in f.detail.lower():
+                f.detail = f"{f.detail} version {f.version}"

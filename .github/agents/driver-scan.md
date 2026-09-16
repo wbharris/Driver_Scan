@@ -10,7 +10,7 @@ You are the Driver Scan agent for https://github.com/wbharris/Driver_Scan.
 
 ## Job
 
-Inventory **this** machine. Report missing, failed, firmware, and OS-offered driver updates. Stop. Do not install drivers. Do not download third-party driver packs. Do not recommend third-party driver-updater apps.
+Inventory **this** machine. Report missing, failed, firmware, and OS-offered driver updates. You may `locate`, `fetch` (OS packages / official URLs only), `backup`, or `schedule` when the operator asks. Do not install drivers. Do not download `.exe` / `.inf` from random websites. Do not recommend third-party driver-updater apps.
 
 ## Run
 
@@ -20,6 +20,7 @@ From the repo root (create a venv if `driver-scan` is not on PATH):
 python3 -m venv .venv
 .venv/bin/pip install -e ".[dev]"
 .venv/bin/driver-scan --markdown --problems-only
+# also: locate | fetch -o ./driver-downloads | backup -o ./drivers.zip | schedule install --every daily
 ```
 
 Windows:

@@ -1,6 +1,6 @@
 # Driver Scan™ product contract
 
-End goal: an agent (and CLI) **scans the local machine** for hardware that has **no driver**, a **failed driver**, **missing firmware**, or an **OS-offered driver/firmware update**, on **Linux and Windows**, and writes one report.
+End goal: an agent (and CLI) **scans the local machine** for hardware that has **no driver**, a **failed driver**, **missing firmware**, or an **OS-offered driver/firmware update**, on **Linux and Windows**, then can **locate official sources**, **fetch OS packages**, **backup** the current driver set, and **schedule** repeats.
 
 Repo: https://github.com/wbharris/Driver_Scan
 
@@ -9,10 +9,11 @@ Repo: https://github.com/wbharris/Driver_Scan
 ## Why this exists
 
 1. What hardware is here?
-2. What has no driver or a broken one?
+2. What has no driver, is broken, or has an OS-offered update?
 3. Where is the **official** fix?
+4. Can I snapshot what is installed, and run this again on a timer?
 
-Driver Scan does (1)–(3). It does not host installers, scrape a private driver database, or auto-install third-party packs.
+Driver Scan does (1)–(4). It does not host installers, scrape a private driver database, or auto-install third-party packs.
 
 ## User journey
 
@@ -20,33 +21,44 @@ Driver Scan does (1)–(3). It does not host installers, scrape a private driver
 this machine
      │
      ▼
-1. Detect OS family (linux | windows)
+1. Detect OS family (linux | windows) + chassis OEM (DMI / WMI)
      │
      ▼
 2. Inventory
    Linux:  lspci -nnk, lsusb + sysfs bind, dmesg/journal firmware,
-           dkms, ubuntu-drivers, apt upgradable (firmware/GPU)
-   Windows: Win32_PnPEntity, Win32_PnPSignedDriver,
+           dkms, ubuntu-drivers, apt upgradable (firmware/GPU), modinfo version
+   Windows: Win32_PnPEntity, Win32_PnPSignedDriver (version + date),
             optional Microsoft.Update.Session Type='Driver'
      │
      ▼
 3. Classify  missing | error | firmware | update | ok | skip
      │
      ▼
-4. Report  text | markdown | json
-   official_url = OEM or chip vendor support page
+4. Report  text | markdown | json | html
+   official_url = chip vendor; oem_url = PC maker
      │
-     ▼
-5. Stop
-   Operator installs from Windows Update / apt / OEM. Agent does not.
+     ├─ locate  unique official URLs
+     ├─ fetch   LINKS.txt + apt-get download (Linux OS packages only)
+     ├─ backup  zip (report + pnputil export or Linux config snapshot)
+     └─ schedule  systemd --user timer or schtasks
 ```
+
+## Commands
+
+| Command | Behavior |
+|---------|----------|
+| `scan` | Inventory + classify. Default if no subcommand. |
+| `locate` | Print PC-maker URL and per-problem chip-vendor URLs |
+| `fetch` | `LINKS.txt`; Linux also `apt-get download` matching firmware/driver packages |
+| `backup` | Zip report + driver store export (Windows) or lspci/lsusb/modprobe.d/dkms (Linux) |
+| `schedule install\|status\|remove` | Hourly/daily/weekly scan; optional `--backup` `--notify` |
 
 ## Collectors
 
 | OS | Required tools | Optional |
 |----|----------------|----------|
-| Linux | `lspci`, `lsusb`, `/sys` | `dmesg` / `journalctl`, `dkms`, `ubuntu-drivers`, `apt` |
-| Windows | PowerShell + CIM | Windows Update COM search (`--no-windows-update` skips) |
+| Linux | `lspci`, `lsusb`, `/sys` | `dmesg` / `journalctl`, `dkms`, `ubuntu-drivers`, `apt`, `modinfo`, DMI |
+| Windows | PowerShell + CIM | Windows Update COM search (`--no-windows-update` skips), `pnputil`, `schtasks` |
 
 Missing tools are **skipped and named**, not a crash.
 
@@ -54,7 +66,7 @@ Missing tools are **skipped and named**, not a crash.
 
 **Linux PCI**
 
-- `Kernel driver in use` → `ok`
+- `Kernel driver in use` → `ok` (modinfo version when present)
 - `Kernel modules` listed, no driver in use → `missing`
 - Neither, and class is not a bridge/PMC → `missing`
 - PCI class `0600` / `0601` / `0604` / `0580` without a driver → `skip`
@@ -80,13 +92,13 @@ Missing tools are **skipped and named**, not a crash.
 
 ## Non-goals
 
-- Installing drivers
-- Hosting or fetching `.inf` / `.sys` / `.exe` from the internet
+- Installing drivers without the operator
+- Fetching `.inf` / `.sys` / `.exe` from arbitrary websites
 - A paid catalog of “outdated” versions
 - macOS / BSD (later)
 
 ## Outputs
 
-CLI: `driver-scan` (also `driver-scan scan`). Exit `1` when problem findings exist.
+CLI: `driver-scan` (also `python -m driver_scan`). Exit `1` when problem findings exist (scan/locate).
 
 GitHub agent profile: `.github/agents/driver-scan.md`.

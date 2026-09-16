@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from driver_scan.models import Finding, Report, utc_now
+from driver_scan.oem import apply_chassis
 from driver_scan.util import detect_family, hostname, kernel, os_pretty, powershell_exe, run
 from driver_scan.vendors import official_url
 
@@ -42,6 +43,12 @@ def scan_windows(*, include_windows_update: bool = True) -> Report:
         report.tools_skipped.append("windows-update-search")
     elif include_windows_update:
         report.tools_used.append("windows-update-search")
+    apply_chassis(
+        report,
+        str(payload.get("manufacturer") or "") or None,
+        str(payload.get("model") or "") or None,
+        str(payload.get("serial") or "") or None,
+    )
     return report
 
 
@@ -136,11 +143,13 @@ def _device_finding(dev: dict[str, Any], signed: dict[str, dict[str, Any]]) -> F
     signed_row = signed.get(instance.upper())
     driver = None
     extra = ""
+    version = None
     if signed_row:
         driver = str(signed_row.get("infName") or "") or None
         ver = signed_row.get("driverVersion")
         date = signed_row.get("driverDate")
         extra = f" Signed driver {ver or '?'} ({date or 'no date'})."
+        version = str(ver) if ver else None
 
     if code in CM_MISSING or (status.lower() == "error" and code == 28):
         severity = "missing"
@@ -174,6 +183,7 @@ def _device_finding(dev: dict[str, Any], signed: dict[str, dict[str, Any]]) -> F
         vendor_id=vid.lower() if vid else None,
         device_id=did.lower() if did else None,
         driver=driver,
+        version=version,
         official_url=url,
         suggested=suggested,
     )

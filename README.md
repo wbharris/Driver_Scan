@@ -10,7 +10,16 @@ Contract: [`docs/PRODUCT.md`](docs/PRODUCT.md). Copilot / coding-agent profile: 
 
 **Driver Scan™** is a trademark of wbharris (common-law ™). See [`TRADEMARK.md`](TRADEMARK.md).
 
-## What it finds
+## What it does
+
+| Command | Job |
+|---------|-----|
+| `driver-scan` / `scan` | Fast inventory: missing, error, firmware, OS-offered updates |
+| `driver-scan --html` | Stand-alone results page |
+| `locate` | Official PC-maker and chip-vendor URLs for problem devices |
+| `fetch -o DIR` | Write `LINKS.txt`; on Linux `apt-get download` firmware/driver packages into DIR (progress per package) |
+| `backup -o FILE.zip` | Zip the report plus a driver/config snapshot (Windows: `pnputil /export-driver`; Linux: lspci/lsusb, modprobe.d, dkms) |
+| `schedule install` | Repeat the scan (systemd user timer or Windows Task Scheduler): hourly / daily / weekly, optional backup + notify |
 
 | Severity | Meaning |
 |----------|---------|
@@ -45,7 +54,14 @@ Python 3.11+. No extra runtime packages. Windows collection uses the bundled `wi
 driver-scan
 driver-scan --problems-only
 driver-scan --json
+driver-scan --html -o cases/$(hostname).html
 driver-scan --markdown -o cases/$(hostname).md
+driver-scan locate
+driver-scan fetch -o ./driver-downloads
+driver-scan backup -o ./drivers.zip
+driver-scan schedule install --every daily --backup --notify
+driver-scan schedule status
+driver-scan schedule remove
 ```
 
 ```text
@@ -67,10 +83,11 @@ On GitHub.com Copilot coding agent / VS Code custom agents: select **Driver Scan
 
 ## Honesty
 
-- “Outdated” means the **OS** offered an update (apt / Windows Update), not a scraped commercial driver catalog.
+- “Outdated” means the **OS** offered an update (apt / Windows Update), not a scraped commercial catalog.
 - Chipset bridges, ISA/PMC, and USB hubs are `skip`, not missing.
 - Firmware lines need `dmesg` or `journalctl` permission; if those fail, the report lists them under skipped tools.
 - Prefer Windows Update, then Dell/HP/Lenovo/ASUS, then Intel/AMD/NVIDIA.
+- `fetch` never pulls random `.exe` / `.inf` from the web. Linux downloads distro packages only.
 
 ## License
 

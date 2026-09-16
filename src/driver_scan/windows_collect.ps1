@@ -56,8 +56,14 @@ function Get-WuDrivers {
     return $items
 }
 
+$cs = Get-CimInstance -ClassName Win32_ComputerSystem
+$bios = Get-CimInstance -ClassName Win32_BIOS
+
 $payload = [ordered]@{
     hostname             = $env:COMPUTERNAME
+    manufacturer         = if ($cs) { $cs.Manufacturer } else { $null }
+    model                = if ($cs) { $cs.Model } else { $null }
+    serial               = if ($bios) { $bios.SerialNumber } else { $null }
     devices              = @(Get-Devices)
     signedDrivers        = @(Get-SignedDrivers)
     windowsUpdateDrivers = @()

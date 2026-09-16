@@ -9,7 +9,11 @@ def test_help_and_version(capsys):
     except SystemExit as e:
         assert e.code == 0
     out = capsys.readouterr().out
-    assert "Scan this machine" in out or "official" in out.lower()
+    assert "Scan this machine" in out
+    assert "backup" in out.lower()
+    assert "schedule" in out.lower()
+    assert "locate" in out.lower()
+    assert "fetch" in out.lower()
 
 
 def test_renderers():

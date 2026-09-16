@@ -16,6 +16,7 @@ def run(
     *,
     timeout: int = 30,
     env: dict[str, str] | None = None,
+    cwd: str | Path | None = None,
 ) -> tuple[int, str, str]:
     try:
         proc = subprocess.run(
@@ -24,6 +25,7 @@ def run(
             text=True,
             timeout=timeout,
             env=env,
+            cwd=str(cwd) if cwd else None,
             check=False,
         )
     except FileNotFoundError:
@@ -40,6 +42,17 @@ def detect_family() -> str:
     if sysname == "linux":
         return "linux"
     return sysname or "unknown"
+
+
+def data_dir() -> Path:
+    if detect_family() == "windows":
+        base = os.environ.get("LOCALAPPDATA") or str(Path.home() / "AppData" / "Local")
+        path = Path(base) / "DriverScan"
+    else:
+        base = os.environ.get("XDG_DATA_HOME") or str(Path.home() / ".local" / "share")
+        path = Path(base) / "driver-scan"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
 
 
 def hostname() -> str:

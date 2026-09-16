@@ -18,7 +18,12 @@ def render_markdown(report: Report, *, problems_only: bool = False) -> str:
         f"- **OS:** {report.os}",
         f"- **Kernel:** {report.kernel}",
         f"- **When:** {report.scanned_at}",
+        f"- **Chassis:** {report.oem or '-'} {report.model or ''}".rstrip(),
         f"- **Problems:** {len(report.problems())}",
+    ]
+    if report.oem_url:
+        lines.append(f"- **PC maker:** {report.oem_url}")
+    lines += [
         "",
         "## Counts",
         "",
@@ -56,6 +61,8 @@ def _finding_md(f: Finding) -> str:
         meta.append(f"id `{f.vendor_id}:{f.device_id}`")
     if f.driver:
         meta.append(f"driver `{f.driver}`")
+    if f.version:
+        meta.append(f"version `{f.version}`")
     if f.modules:
         meta.append("modules " + ", ".join(f"`{m}`" for m in f.modules))
     if f.official_url:
@@ -79,6 +86,10 @@ def render_text(report: Report, *, problems_only: bool = False) -> str:
     lines = [
         f"Driver Scan  {report.hostname}  {report.os}  {report.kernel}",
         f"scanned {report.scanned_at}  problems={len(report.problems())}  {count_s}",
+    ]
+    if report.oem or report.model:
+        lines.append(f"chassis {report.oem or '-'} {report.model or ''}  {report.oem_url or ''}".rstrip())
+    lines += [
         "",
     ]
     show = [f for f in findings if f.severity in PROBLEM_SEVERITIES] if problems_only else findings
@@ -110,3 +121,62 @@ def render_json(report: Report, *, problems_only: bool = False) -> str:
     if problems_only:
         data["findings"] = [f.to_dict() for f in report.problems()]
     return json.dumps(data, indent=2) + "\n"
+
+
+def render_html(report: Report, *, problems_only: bool = False) -> str:
+    findings = report.problems() if problems_only else report.findings
+    findings = sorted(findings, key=lambda f: (ORDER.index(f.severity) if f.severity in ORDER else 9, f.id))
+    rows = []
+    for f in findings:
+        url = f'<a href="{_esc(f.official_url)}">{_esc(f.official_url)}</a>' if f.official_url else ""
+        ident = f"{f.vendor_id}:{f.device_id}" if f.vendor_id and f.device_id else f.bus
+        rows.append(
+            "<tr>"
+            f"<td class='s {_esc(f.severity)}'>{_esc(f.severity)}</td>"
+            f"<td>{_esc(f.name)}</td>"
+            f"<td>{_esc(ident)}</td>"
+            f"<td>{_esc(f.driver or '')} {_esc(f.version or '')}</td>"
+            f"<td>{_esc(f.detail.splitlines()[0] if f.detail else '')}</td>"
+            f"<td>{url}</td>"
+            "</tr>"
+        )
+    counts = " ".join(f"{k}={v}" for k, v in report.counts().items() if v)
+    chassis = _esc(" ".join(p for p in (report.oem, report.model) if p) or "-")
+    oem = (
+        f'<p>PC maker: <a href="{_esc(report.oem_url)}">{_esc(report.oem_url)}</a></p>'
+        if report.oem_url
+        else ""
+    )
+    return f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Driver Scan — {_esc(report.hostname)}</title>
+<style>
+body {{ font: 14px/1.4 system-ui, sans-serif; background:#0d1117; color:#e6edf3; margin:24px; }}
+table {{ border-collapse: collapse; width:100%; }}
+th, td {{ border-bottom:1px solid #30363d; padding:6px 8px; text-align:left; vertical-align:top; }}
+th {{ color:#8b949e; font-weight:600; }}
+.s.missing,.s.error,.s.firmware {{ color:#f85149; }}
+.s.update {{ color:#d29922; }}
+.s.ok {{ color:#3fb950; }}
+.s.skip {{ color:#8b949e; }}
+a {{ color:#58a6ff; }}
+</style></head><body>
+<h1>Driver Scan</h1>
+<p>{_esc(report.hostname)} — {_esc(report.os)} — {_esc(report.kernel)}</p>
+<p>scanned {_esc(report.scanned_at)} — problems={len(report.problems())} — { _esc(counts) }</p>
+<p>chassis {chassis}</p>
+{oem}
+<table><thead><tr><th>Status</th><th>Device</th><th>Id</th><th>Driver</th><th>Detail</th><th>Official</th></tr></thead>
+<tbody>
+{''.join(rows) or '<tr><td colspan="6">No matching findings.</td></tr>'}
+</tbody></table>
+</body></html>
+"""
+
+
+def _esc(value: str) -> str:
+    return (
+        value.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+    )
