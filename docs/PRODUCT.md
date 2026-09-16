@@ -1,6 +1,6 @@
 # Driver Scan™ product contract
 
-End goal: an agent (and CLI) **scans the local machine** for hardware that has **no driver**, a **failed driver**, **missing firmware**, or an **OS-offered driver/firmware update**, on **Linux and Windows**, then can **locate official sources**, **fetch OS packages**, **backup** the current driver set, and **schedule** repeats.
+End goal: an agent (and CLI) **scans the local machine** for hardware that has **no driver**, a **mismatched/fallback driver**, a **failed driver**, **missing firmware**, or an **OS-offered driver/firmware update**, on **Linux and Windows**, then can **guide** official next steps, **locate** sources, **fetch** OS packages, **backup/restore**, and **schedule** repeats.
 
 Repo: https://github.com/wbharris/Driver_Scan
 
@@ -31,7 +31,8 @@ this machine
             optional Microsoft.Update.Session Type='Driver'
      │
      ▼
-3. Classify  missing | error | firmware | update | ok | skip
+3. Classify  missing | mismatch | error | firmware | update | ok | skip
+   Categories: graphics, audio, network, chipset, storage, usb, other
      │
      ▼
 4. Report  text | markdown | json | html
@@ -47,10 +48,12 @@ this machine
 
 | Command | Behavior |
 |---------|----------|
-| `scan` | Inventory + classify. Default if no subcommand. |
+| `scan` | Inventory + classify. Default if no subcommand. `--notify` for a desktop alert. |
+| `guide` | Numbered playbook: backup, OS update, PC maker, vendor, restore |
 | `locate` | Print PC-maker URL and per-problem chip-vendor URLs |
 | `fetch` | `LINKS.txt`; Linux also `apt-get download` matching firmware/driver packages |
 | `backup` | Zip report + driver store export (Windows) or lspci/lsusb/modprobe.d/dkms (Linux) |
+| `restore` | Dry-run a backup zip; `--apply` restores Linux configs or Windows INF via pnputil |
 | `schedule install\|status\|remove` | Hourly/daily/weekly scan; optional `--backup` `--notify` |
 
 ## Collectors
@@ -67,6 +70,7 @@ Missing tools are **skipped and named**, not a crash.
 **Linux PCI**
 
 - `Kernel driver in use` → `ok` (modinfo version when present)
+- NVIDIA bound to `nouveau`, or graphics on `vesa`/`simpledrm` → `mismatch`
 - `Kernel modules` listed, no driver in use → `missing`
 - Neither, and class is not a bridge/PMC → `missing`
 - PCI class `0600` / `0601` / `0604` / `0580` without a driver → `skip`
@@ -80,6 +84,7 @@ Missing tools are **skipped and named**, not a crash.
 **Windows ConfigManagerErrorCode**
 
 - `28` → `missing`
+- Generic Basic Display / Standard VGA, or codes `32` / `39` / `48` → `mismatch`
 - `10`, `31`, `43`, `52`, and other failure codes → `error`
 - `22` (disabled), `45` (not connected) → `skip`
 - `0` → `ok` (plus a separate `update` row if Windows Update offers a driver)

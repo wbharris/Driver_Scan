@@ -1,6 +1,7 @@
 import zipfile
 
-from driver_scan.backup import backup
+from driver_scan.backup import backup, restore
+from driver_scan.guide import guide_text
 from driver_scan.fetch import locate_text
 from driver_scan.linux import parse_apt_package_names
 from driver_scan.models import Finding, Report
@@ -69,3 +70,41 @@ def test_schedule_runner(tmp_path, monkeypatch):
     assert "scan" in text
     assert "backup" in text
     assert str(tmp_path) in text
+
+
+def test_restore_dry_run(tmp_path):
+    archive = tmp_path / "b.zip"
+    with zipfile.ZipFile(archive, "w") as zf:
+        zf.writestr("modprobe.d/example.conf", b"blacklist foo\n")
+    notes = restore(archive, apply=False, family="linux")
+    blob = "\n".join(notes)
+    assert "dry-run" in blob
+    assert "modprobe.d/example.conf" in blob
+    applied = restore(archive, apply=True, family="linux", dest_root=tmp_path / "etc")
+    assert (tmp_path / "etc" / "modprobe.d" / "example.conf").read_text() == "blacklist foo\n"
+    assert any("wrote" in n for n in applied)
+
+
+def test_guide_lists_backup_then_restore():
+    report = Report(
+        hostname="box",
+        os="Kali",
+        kernel="7",
+        scanned_at="2026-01-01T00:00:00Z",
+        oem_url="https://www.dell.com/support/home",
+        findings=[
+            Finding(
+                id="pci:1",
+                severity="mismatch",
+                bus="pci",
+                name="GPU",
+                detail="nouveau",
+                category="graphics",
+                official_url="https://www.nvidia.com/Download/index.aspx",
+            )
+        ],
+    )
+    text = guide_text(report)
+    assert "backup" in text
+    assert "mismatch" in text
+    assert "restore" in text

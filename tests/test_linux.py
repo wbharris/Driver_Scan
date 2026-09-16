@@ -31,6 +31,19 @@ def test_lspci_ok_missing_skip():
     assert by_slot["pci:03:00.0"].severity == "missing"
     assert by_slot["pci:03:00.0"].vendor_id == "10ec"
     assert by_slot["pci:00:02.0"].official_url
+    assert by_slot["pci:00:02.0"].category == "graphics"
+    assert by_slot["pci:02:00.0"].category == "network"
+
+
+def test_nouveau_is_mismatch():
+    text = """
+01:00.0 VGA compatible controller [0300]: NVIDIA Corporation GP107 [10de:1cb3]
+	Kernel driver in use: nouveau
+	Kernel modules: nvidia, nouveau
+"""
+    findings = parse_lspci(text)
+    assert findings[0].severity == "mismatch"
+    assert findings[0].driver == "nouveau"
 
 
 def test_lsusb_hub_vs_unbound():

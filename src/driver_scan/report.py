@@ -4,7 +4,8 @@ import json
 
 from driver_scan.models import PROBLEM_SEVERITIES, Finding, Report
 
-ORDER = ("missing", "error", "firmware", "update", "ok", "skip")
+ORDER = ("missing", "error", "mismatch", "firmware", "update", "ok", "skip")
+CAT_ORDER = ("graphics", "audio", "network", "storage", "chipset", "usb", "other")
 
 
 def render_markdown(report: Report, *, problems_only: bool = False) -> str:
@@ -133,6 +134,7 @@ def render_html(report: Report, *, problems_only: bool = False) -> str:
         rows.append(
             "<tr>"
             f"<td class='s {_esc(f.severity)}'>{_esc(f.severity)}</td>"
+            f"<td>{_esc(f.category)}</td>"
             f"<td>{_esc(f.name)}</td>"
             f"<td>{_esc(ident)}</td>"
             f"<td>{_esc(f.driver or '')} {_esc(f.version or '')}</td>"
@@ -154,7 +156,7 @@ body {{ font: 14px/1.4 system-ui, sans-serif; background:#0d1117; color:#e6edf3;
 table {{ border-collapse: collapse; width:100%; }}
 th, td {{ border-bottom:1px solid #30363d; padding:6px 8px; text-align:left; vertical-align:top; }}
 th {{ color:#8b949e; font-weight:600; }}
-.s.missing,.s.error,.s.firmware {{ color:#f85149; }}
+.s.missing,.s.error,.s.firmware,.s.mismatch {{ color:#f85149; }}
 .s.update {{ color:#d29922; }}
 .s.ok {{ color:#3fb950; }}
 .s.skip {{ color:#8b949e; }}
@@ -165,9 +167,9 @@ a {{ color:#58a6ff; }}
 <p>scanned {_esc(report.scanned_at)} — problems={len(report.problems())} — { _esc(counts) }</p>
 <p>chassis {chassis}</p>
 {oem}
-<table><thead><tr><th>Status</th><th>Device</th><th>Id</th><th>Driver</th><th>Detail</th><th>Official</th></tr></thead>
+<table><thead><tr><th>Status</th><th>Class</th><th>Device</th><th>Id</th><th>Driver</th><th>Detail</th><th>Official</th></tr></thead>
 <tbody>
-{''.join(rows) or '<tr><td colspan="6">No matching findings.</td></tr>'}
+{''.join(rows) or '<tr><td colspan="7">No matching findings.</td></tr>'}
 </tbody></table>
 </body></html>
 """

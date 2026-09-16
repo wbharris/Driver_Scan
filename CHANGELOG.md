@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+
+- `mismatch` for generic/fallback or OS-incompatible drivers (graphics/audio/network/chipset classes on the report).
+- `guide` ordered next steps; `restore` from a backup zip (`--apply` to write).
+- `scan --notify` when problems exist.
+
 ## 0.2.0
 
 - Chassis OEM from DMI / WMI (PC-maker support URL on the report).

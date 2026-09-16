@@ -4,10 +4,11 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Literal
 
-Severity = Literal["missing", "error", "firmware", "update", "ok", "skip"]
+Severity = Literal["missing", "error", "mismatch", "firmware", "update", "ok", "skip"]
 Bus = Literal["pci", "usb", "pnp", "package", "firmware", "dkms", "system"]
+Category = Literal["graphics", "audio", "network", "chipset", "storage", "usb", "other"]
 
-PROBLEM_SEVERITIES = frozenset({"missing", "error", "firmware", "update"})
+PROBLEM_SEVERITIES = frozenset({"missing", "error", "mismatch", "firmware", "update"})
 
 
 @dataclass
@@ -23,6 +24,7 @@ class Finding:
     version: str | None = None
     modules: list[str] = field(default_factory=list)
     official_url: str | None = None
+    category: Category = "other"
     suggested: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:

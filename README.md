@@ -1,6 +1,6 @@
 # Driver Scan™
 
-A **GitHub agent** plus a small CLI that **inventories this machine** and reports **missing, error, firmware, and OS-offered driver updates** on **Linux and Windows**.
+A **GitHub agent** plus a small CLI that **inventories this machine** and reports **missing, mismatched, error, firmware, and OS-offered driver updates** on **Linux and Windows**.
 
 It does **not** download or install vendor `.exe` / `.inf` blobs from the internet. Official sources only: Windows Update, the distro package manager, and the PC/chip maker’s support page.
 
@@ -14,16 +14,20 @@ Contract: [`docs/PRODUCT.md`](docs/PRODUCT.md). Copilot / coding-agent profile: 
 
 | Command | Job |
 |---------|-----|
-| `driver-scan` / `scan` | Fast inventory: missing, error, firmware, OS-offered updates |
-| `driver-scan --html` | Stand-alone results page |
+| `driver-scan` / `scan` | Fast inventory: missing, mismatched, error, firmware, OS-offered updates |
+| `driver-scan --html` | Stand-alone results page (graphics / audio / network / chipset / …) |
+| `guide` | Ordered next steps (backup → OS update → PC maker → vendor → restore) |
 | `locate` | Official PC-maker and chip-vendor URLs for problem devices |
-| `fetch -o DIR` | Write `LINKS.txt`; on Linux `apt-get download` firmware/driver packages into DIR (progress per package) |
-| `backup -o FILE.zip` | Zip the report plus a driver/config snapshot (Windows: `pnputil /export-driver`; Linux: lspci/lsusb, modprobe.d, dkms) |
-| `schedule install` | Repeat the scan (systemd user timer or Windows Task Scheduler): hourly / daily / weekly, optional backup + notify |
+| `fetch -o DIR` | Write `LINKS.txt`; on Linux `apt-get download` firmware/driver packages into DIR |
+| `backup -o FILE.zip` | Zip the report plus a driver/config snapshot |
+| `restore FILE.zip` | Dry-run restore; `--apply` writes Linux configs or Windows `pnputil /add-driver` |
+| `schedule install` | Repeat the scan; optional `--backup --notify` |
+| `scan --notify` | Desktop notify when the scan finds problems |
 
 | Severity | Meaning |
 |----------|---------|
 | `missing` | Hardware present, no driver bound (Linux) or Device Manager code 28 (Windows) |
+| `mismatch` | Generic/fallback or OS-incompatible package (Basic Display, nouveau, code 32/39/48) |
 | `error` | Device started and failed (code 10/31/43/52, DKMS broken) |
 | `firmware` | Kernel log shows a firmware load failure |
 | `update` | Distro packages (`linux-firmware`, NVIDIA, mesa, …) or Windows Update **driver** offers |
@@ -59,6 +63,10 @@ driver-scan --markdown -o cases/$(hostname).md
 driver-scan locate
 driver-scan fetch -o ./driver-downloads
 driver-scan backup -o ./drivers.zip
+driver-scan restore ./drivers.zip
+driver-scan restore ./drivers.zip --apply
+driver-scan guide
+driver-scan --notify
 driver-scan schedule install --every daily --backup --notify
 driver-scan schedule status
 driver-scan schedule remove

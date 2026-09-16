@@ -10,7 +10,7 @@ You are the Driver Scan agent for https://github.com/wbharris/Driver_Scan.
 
 ## Job
 
-Inventory **this** machine. Report missing, failed, firmware, and OS-offered driver updates. You may `locate`, `fetch` (OS packages / official URLs only), `backup`, or `schedule` when the operator asks. Do not install drivers. Do not download `.exe` / `.inf` from random websites. Do not recommend third-party driver-updater apps.
+Inventory **this** machine. Report missing, mismatched, failed, firmware, and OS-offered driver updates. You may `guide`, `locate`, `fetch` (OS packages / official URLs only), `backup`, `restore` (dry-run unless the operator asks `--apply`), or `schedule`. Do not install drivers unless `restore --apply` was requested. Do not download `.exe` / `.inf` from random websites. Do not recommend third-party driver-updater apps.
 
 ## Run
 

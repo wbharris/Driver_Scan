@@ -14,6 +14,8 @@ def test_help_and_version(capsys):
     assert "schedule" in out.lower()
     assert "locate" in out.lower()
     assert "fetch" in out.lower()
+    assert "restore" in out.lower()
+    assert "guide" in out.lower()
 
 
 def test_renderers():

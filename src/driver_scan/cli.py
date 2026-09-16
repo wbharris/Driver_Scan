@@ -5,15 +5,17 @@ import sys
 from pathlib import Path
 
 from driver_scan import __version__
-from driver_scan.backup import backup
+from driver_scan.backup import backup, restore
 from driver_scan.fetch import fetch, locate_text
+from driver_scan.guide import guide_text
 from driver_scan.report import render_html, render_json, render_markdown, render_text
 from driver_scan.scan import scan
 from driver_scan.schedule import install as schedule_install
 from driver_scan.schedule import remove as schedule_remove
 from driver_scan.schedule import status as schedule_status
+from driver_scan.util import notify as desktop_notify
 
-COMMANDS = ("scan", "backup", "schedule", "locate", "fetch")
+COMMANDS = ("scan", "backup", "schedule", "locate", "fetch", "restore", "guide")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -26,9 +28,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="driver-scan",
         description=(
-            "Inventory local hardware: missing, error, firmware, and OS-offered "
-            "driver updates. Locate official OEM/OS sources, backup installed "
-            "drivers, and schedule repeats."
+            "Inventory local hardware: missing, mismatched, error, firmware, and "
+            "OS-offered driver updates. Locate official OEM/OS sources, backup "
+            "and restore, guide next steps, and schedule repeats."
         ),
     )
     parser.add_argument("--version", action="version", version=f"driver-scan {__version__}")
@@ -59,6 +61,13 @@ def main(argv: list[str] | None = None) -> int:
     sch.add_argument("--backup", action="store_true", help="Also zip a backup on each run")
     sch.add_argument("--notify", action="store_true", help="Desktop notify when problems > 0 (Linux)")
 
+    rst = sub.add_parser("restore", help="Restore a backup zip (dry-run unless --apply)")
+    rst.add_argument("archive", type=Path)
+    rst.add_argument("--apply", action="store_true", help="Write configs / pnputil /add-driver")
+    rst.add_argument("--os", choices=("auto", "linux", "windows"), default="auto")
+
+    sub.add_parser("guide", help="Ordered next steps from a fresh scan")
+
     args = parser.parse_args(argv)
     if args.cmd == "scan":
         return _cmd_scan(args)
@@ -70,6 +79,10 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_fetch(args)
     if args.cmd == "schedule":
         return _cmd_schedule(args)
+    if args.cmd == "restore":
+        return _cmd_restore(args)
+    if args.cmd == "guide":
+        return _cmd_guide(args)
     return 2
 
 
@@ -90,6 +103,7 @@ def _add_scan_flags(p: argparse.ArgumentParser) -> None:
         action="store_true",
         help="Skip Windows Update COM search (Windows only)",
     )
+    p.add_argument("--notify", action="store_true", help="Desktop notify when problems > 0")
 
 
 def _family(args: argparse.Namespace) -> str | None:
@@ -111,6 +125,8 @@ def _cmd_scan(args: argparse.Namespace) -> int:
         args.output.write_text(body, encoding="utf-8")
         sys.stderr.write(f"wrote {args.output}\n")
     sys.stdout.write(body)
+    if args.notify and report.problems():
+        desktop_notify("Driver Scan", f"{len(report.problems())} problem(s) on {report.hostname}")
     return 1 if report.problems() else 0
 
 
@@ -149,6 +165,19 @@ def _cmd_schedule(args: argparse.Namespace) -> int:
         return 0
     sys.stdout.write(schedule_status() + "\n")
     return 0
+
+
+def _cmd_restore(args: argparse.Namespace) -> int:
+    notes = restore(args.archive, apply=args.apply, family=_family(args))
+    for n in notes:
+        sys.stdout.write(f"{n}\n")
+    return 0
+
+
+def _cmd_guide(args: argparse.Namespace) -> int:
+    report = scan(None)
+    sys.stdout.write(guide_text(report))
+    return 1 if report.problems() else 0
 
 
 if __name__ == "__main__":

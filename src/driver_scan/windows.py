@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from driver_scan.classify import category_from_pnp, windows_mismatch
 from driver_scan.models import Finding, Report, utc_now
 from driver_scan.oem import apply_chassis
 from driver_scan.util import detect_family, hostname, kernel, os_pretty, powershell_exe, run
@@ -140,6 +141,7 @@ def _device_finding(dev: dict[str, Any], signed: dict[str, dict[str, Any]]) -> F
     vid = _hw_id_piece(instance, "VEN_") or _hw_id_piece(instance, "VID_")
     did = _hw_id_piece(instance, "DEV_") or _hw_id_piece(instance, "PID_")
     url = official_url(vid, f"{manufacturer} {name}")
+    cat = category_from_pnp(class_name, name)
     signed_row = signed.get(instance.upper())
     driver = None
     extra = ""
@@ -151,6 +153,7 @@ def _device_finding(dev: dict[str, Any], signed: dict[str, dict[str, Any]]) -> F
         extra = f" Signed driver {ver or '?'} ({date or 'no date'})."
         version = str(ver) if ver else None
 
+    why = windows_mismatch(name=name, class_name=class_name, code=code, category=cat)
     if code in CM_MISSING or (status.lower() == "error" and code == 28):
         severity = "missing"
         detail = f"Device Manager code {code} (no driver). {problem} {status}".strip()
@@ -162,6 +165,13 @@ def _device_finding(dev: dict[str, Any], signed: dict[str, dict[str, Any]]) -> F
         severity = "skip"
         detail = f"Code {code} ({problem or status}). Not treated as missing."
         suggested = []
+    elif why:
+        severity = "mismatch"
+        detail = why + extra
+        suggested = [
+            "Windows Update optional driver updates",
+            f"GPU/chip vendor page: {url}" if url else "PC maker support page",
+        ]
     elif code in CM_ERROR or status.lower() in {"error", "degraded"}:
         severity = "error"
         detail = f"Device Manager code {code}: {problem or status}.{extra}"
@@ -185,6 +195,7 @@ def _device_finding(dev: dict[str, Any], signed: dict[str, dict[str, Any]]) -> F
         driver=driver,
         version=version,
         official_url=url,
+        category=cat,  # type: ignore[arg-type]
         suggested=suggested,
     )
 

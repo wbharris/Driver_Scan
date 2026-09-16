@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import tempfile
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -77,3 +78,85 @@ def _windows_export(folder: Path, staging: dict[str, bytes], notes: list[str]) -
             rel = path.relative_to(folder).as_posix()
             staging[f"drivers/{rel}"] = path.read_bytes()
     notes.append("exported Windows driver store via pnputil")
+
+
+def restore(
+    archive: Path,
+    *,
+    apply: bool = False,
+    dest_root: Path | None = None,
+    family: str | None = None,
+) -> list[str]:
+    archive = archive.expanduser().resolve()
+    if not archive.is_file():
+        return [f"not a file: {archive}"]
+    fam = (family or detect_family()).lower()
+    notes: list[str] = [f"archive {archive}"]
+    with zipfile.ZipFile(archive) as zf:
+        names = zf.namelist()
+        infs = [n for n in names if n.lower().endswith(".inf") and n.startswith("drivers/")]
+        confs = [n for n in names if n.startswith("modprobe.d/") or n.startswith("modules-load.d/")]
+        if fam == "windows":
+            notes.extend(_restore_windows(zf, infs, apply=apply))
+        else:
+            notes.extend(_restore_linux(zf, confs, apply=apply, dest_root=dest_root))
+    return notes
+
+
+def _restore_windows(zf: zipfile.ZipFile, infs: list[str], *, apply: bool) -> list[str]:
+    notes = [f"{len(infs)} INF files in archive"]
+    if not infs:
+        notes.append("no drivers/*.inf in zip; nothing to restore")
+        return notes
+    if not apply:
+        notes.append("dry-run; pass --apply as Administrator to pnputil /add-driver")
+        notes.extend(infs[:20])
+        return notes
+    pnputil = which("pnputil") or which("pnputil.exe")
+    if not pnputil:
+        notes.append("pnputil not found")
+        return notes
+    extract_root = Path(tempfile.mkdtemp(prefix="driver-scan-restore-"))
+    zf.extractall(extract_root)
+    for inf in infs:
+        code, out, err = run(
+            [pnputil, "/add-driver", str(extract_root / inf), "/install"],
+            timeout=180,
+        )
+        notes.append(f"{inf}: {(out or err).strip() or f'exit {code}'}")
+    return notes
+
+
+def _restore_linux(
+    zf: zipfile.ZipFile,
+    confs: list[str],
+    *,
+    apply: bool,
+    dest_root: Path | None,
+) -> list[str]:
+    notes = [f"{len(confs)} config files in archive"]
+    mapping = {
+        "modprobe.d/": Path("/etc/modprobe.d"),
+        "modules-load.d/": Path("/etc/modules-load.d"),
+    }
+    if dest_root is not None:
+        mapping = {
+            "modprobe.d/": dest_root / "modprobe.d",
+            "modules-load.d/": dest_root / "modules-load.d",
+        }
+    if not confs:
+        notes.append("no modprobe.d / modules-load.d in zip; kernel modules are not in the backup")
+        return notes
+    if not apply:
+        notes.append("dry-run; pass --apply to copy configs (does not reinstall kernel modules)")
+        notes.extend(confs[:20])
+        return notes
+    for name in confs:
+        for prefix, dest_dir in mapping.items():
+            if not name.startswith(prefix):
+                continue
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            target = dest_dir / Path(name).name
+            target.write_bytes(zf.read(name))
+            notes.append(f"wrote {target}")
+    return notes

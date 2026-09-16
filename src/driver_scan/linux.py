@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from driver_scan.classify import category_from_pci, linux_mismatch
 from driver_scan.models import Finding, Report, utc_now
 from driver_scan.oem import apply_chassis, read_dmi
 from driver_scan.util import detect_family, hostname, kernel, os_pretty, run, which
@@ -189,6 +190,7 @@ def _pci_finding(cur: dict[str, str | list[str]]) -> Finding:
     modules = list(cur["modules"]) if isinstance(cur["modules"], list) else []
     fid = f"pci:{slot}"
     url = official_url(ven, name)
+    cat = category_from_pci(cc)
     skip = cc in SKIP_PCI_CLASSES
     if skip and not driver:
         return Finding(
@@ -201,8 +203,28 @@ def _pci_finding(cur: dict[str, str | list[str]]) -> Finding:
             device_id=dev,
             modules=modules,
             official_url=url,
+            category=cat,  # type: ignore[arg-type]
         )
     if driver:
+        why = linux_mismatch(ven, driver, cat)
+        if why:
+            return Finding(
+                id=fid,
+                severity="mismatch",
+                bus="pci",
+                name=f"{slot} {name}",
+                detail=why,
+                vendor_id=ven,
+                device_id=dev,
+                driver=driver,
+                modules=modules,
+                official_url=url,
+                category=cat,  # type: ignore[arg-type]
+                suggested=[
+                    "Install the vendor graphics stack from the distro or the GPU maker support page.",
+                    f"Vendor page: {url}" if url else "Identify the GPU vendor support page.",
+                ],
+            )
         return Finding(
             id=fid,
             severity="ok",
@@ -214,6 +236,7 @@ def _pci_finding(cur: dict[str, str | list[str]]) -> Finding:
             driver=driver,
             modules=modules,
             official_url=url,
+            category=cat,  # type: ignore[arg-type]
         )
     if modules:
         return Finding(
@@ -226,6 +249,7 @@ def _pci_finding(cur: dict[str, str | list[str]]) -> Finding:
             device_id=dev,
             modules=modules,
             official_url=url,
+            category=cat,  # type: ignore[arg-type]
             suggested=[
                 f"sudo modprobe {modules[0]}",
                 "Check dmesg for firmware load failures.",
@@ -241,6 +265,7 @@ def _pci_finding(cur: dict[str, str | list[str]]) -> Finding:
         vendor_id=ven,
         device_id=dev,
         official_url=url,
+        category=cat,  # type: ignore[arg-type]
         suggested=[
             "Search the OEM support page with the PCI ID "
             f"{ven}:{dev}" if ven and dev else "Search the OEM support page.",
@@ -278,6 +303,7 @@ def parse_lsusb(text: str, bound: dict[str, str | None]) -> list[Finding]:
                     device_id=prod,
                     driver=driver,
                     official_url=url,
+                    category="usb",
                 )
             )
             continue
@@ -293,6 +319,7 @@ def parse_lsusb(text: str, bound: dict[str, str | None]) -> list[Finding]:
                     device_id=prod,
                     driver=driver,
                     official_url=url,
+                    category="usb",
                 )
             )
             continue
@@ -306,6 +333,7 @@ def parse_lsusb(text: str, bound: dict[str, str | None]) -> list[Finding]:
                 vendor_id=ven,
                 device_id=prod,
                 official_url=url,
+                category="usb",
                 suggested=[
                     f"Look up USB ID {vid} on the OEM or vendor support page.",
                     f"Vendor page: {url}" if url else "Identify the chassis OEM (Dell/HP/Lenovo) support site.",

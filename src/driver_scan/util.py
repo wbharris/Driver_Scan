@@ -55,6 +55,13 @@ def data_dir() -> Path:
     return path
 
 
+def notify(title: str, body: str) -> bool:
+    if which("notify-send"):
+        code, _out, _err = run(["notify-send", title, body], timeout=10)
+        return code == 0
+    return False
+
+
 def hostname() -> str:
     return platform.node() or "unknown"
 

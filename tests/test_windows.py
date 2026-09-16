@@ -21,6 +21,14 @@ PAYLOAD = {
             "configManagerErrorCode": 0,
         },
         {
+            "name": "Microsoft Basic Display Adapter",
+            "manufacturer": "Microsoft",
+            "status": "OK",
+            "class": "Display",
+            "instanceId": r"PCI\VEN_10DE&DEV_1CB3",
+            "configManagerErrorCode": 0,
+        },
+        {
             "name": "Disabled NIC",
             "manufacturer": "Intel",
             "status": "Error",
@@ -55,5 +63,7 @@ def test_windows_payload_severities():
     assert gfx.driver == "iigd_dch.inf"
     assert gfx.official_url
     assert by_name["Disabled NIC"].severity == "skip"
+    assert by_name["Microsoft Basic Display Adapter"].severity == "mismatch"
+    assert by_name["Microsoft Basic Display Adapter"].category == "graphics"
     wu = [f for f in findings if f.severity == "update"]
     assert wu and "Intel - Net" in wu[0].name
